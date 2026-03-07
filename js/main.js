@@ -255,6 +255,11 @@ window.Game = (() => {
     const saved = SaveSystem.load();
     if (saved) {
       state = saved;
+      // Migrate: ensure all monsters have equipment field
+      const allMons = [...(state.party || []), ...(state.box || [])];
+      for (const mon of allMons) {
+        if (!mon.equipment) mon.equipment = { weapon: null, armor: null };
+      }
       initDailyQuests();
       return true;
     }
