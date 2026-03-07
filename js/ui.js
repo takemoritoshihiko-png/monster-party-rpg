@@ -675,6 +675,15 @@ window.UI = (() => {
         });
       }
 
+    } else if (bs.result === 'flee') {
+      box.className = 'battle-result-box';
+      let html = '<div class="result-title" style="color:#90CAF9">ESCAPE!</div>';
+      html += '<div class="result-rewards">';
+      html += '<div style="color:#ccc">戦闘から逃げ出した！</div>';
+      html += '</div>';
+      html += '<button class="btn primary" id="bt-result-ok" style="margin-top:8px;width:100%">ワールドマップに戻る</button>';
+      box.innerHTML = html;
+
     } else {
       box.className = 'battle-result-box lose';
       const lostGold = BattleEngine.applyLoss();
@@ -733,6 +742,15 @@ window.UI = (() => {
     document.getElementById('bt-btn-item').addEventListener('click', showItemMenu);
     document.getElementById('bt-btn-capture').addEventListener('click', showItemMenu);
     document.getElementById('bt-btn-switch').addEventListener('click', showSwitchMenu);
+
+    document.getElementById('bt-btn-flee').addEventListener('click', () => {
+      BattleEngine.playerFlee();
+      renderBattle();
+      const bs = BattleEngine.getState();
+      if (bs.phase === 'result' && bs.result === 'flee') {
+        showBattleResult();
+      }
+    });
 
     document.getElementById('bt-target-cancel').addEventListener('click', () => {
       hideAllSubmenus();
@@ -962,9 +980,12 @@ window.UI = (() => {
     // Traits
     const allTraits = [...(mon.traits || []), ...(mon.synthTraits || [])].filter(Boolean);
     if (allTraits.length > 0) {
+      const tLv = mon.traitLevels || {};
       const traitText = allTraits.map(t => {
         const td = D.TRAITS[t];
-        return td ? `${td.name}: ${td.description}` : t;
+        const lv = tLv[t] || 0;
+        const lvText = lv > 0 ? ` <span class="trait-lv">Lv.${lv} (+${lv * 10}%)</span>` : '';
+        return td ? `${td.name}${lvText}: ${td.description}` : t;
       }).join('<br>');
       html += `<div class="detail-traits">特性:<br>${traitText}</div>`;
     }
@@ -1688,10 +1709,9 @@ window.UI = (() => {
       // Check if selectable for current slot
       let disabled = false;
       if (breedSelectingSlot === 2 && breedParent1) {
-        // Must be same type, different id
-        if (mon.type !== breedParent1.type || mon.id === breedParent1.id) disabled = true;
+        if (mon.id === breedParent1.id) disabled = true;
       } else if (breedSelectingSlot === 1 && breedParent2) {
-        if (mon.type !== breedParent2.type || mon.id === breedParent2.id) disabled = true;
+        if (mon.id === breedParent2.id) disabled = true;
       }
       if (isSelected) disabled = true;
 
@@ -1710,8 +1730,6 @@ window.UI = (() => {
           if (breedSelectingSlot === 1 || (!breedSelectingSlot && !breedParent1)) {
             breedParent1 = mon;
             breedSelectingSlot = null;
-            // If parent2 is set but wrong type, clear it
-            if (breedParent2 && breedParent2.type !== mon.type) breedParent2 = null;
           } else if (breedSelectingSlot === 2 || (!breedSelectingSlot && !breedParent2)) {
             breedParent2 = mon;
             breedSelectingSlot = null;
@@ -1747,10 +1765,22 @@ window.UI = (() => {
     if (bonus.def) html += `DEF補正: <span class="bonus">+${bonus.def}</span><br>`;
     if (bonus.spd) html += `SPD補正: <span class="bonus">+${bonus.spd}</span><br>`;
     if (child.traits.length > 0) {
-      html += `特性: ${child.traits.map(t => D.TRAITS[t]?.name || t).join(', ')}<br>`;
+      const tLv = child.traitLevels || {};
+      const traitDisplay = child.traits.map(t => {
+        const name = D.TRAITS[t]?.name || t;
+        const lv = tLv[t] || 0;
+        return lv > 0 ? `${name} <span class="trait-lv">Lv.${lv}</span>` : name;
+      }).join(', ');
+      html += `特性: ${traitDisplay}<br>`;
     }
     if (child.synthTraits && child.synthTraits.length > 0) {
-      html += `合成特性: ${child.synthTraits.map(t => D.TRAITS[t]?.name || t).join(', ')}<br>`;
+      const tLv = child.traitLevels || {};
+      const synthDisplay = child.synthTraits.map(t => {
+        const name = D.TRAITS[t]?.name || t;
+        const lv = tLv[t] || 0;
+        return lv > 0 ? `${name} <span class="trait-lv">Lv.${lv}</span>` : name;
+      }).join(', ');
+      html += `合成特性: ${synthDisplay}<br>`;
     }
     html += `</div></div>`;
 

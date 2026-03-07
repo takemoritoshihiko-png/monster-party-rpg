@@ -400,20 +400,24 @@ function calcEffectiveStats(monster) {
     if (ef.spd) skillBonusSpd += ef.spd;
   }
 
-  // Trait bonuses
+  // Trait bonuses (with trait level enhancement)
   const allTraits = [...(monster.traits || []), ...(monster.synthTraits || [])].filter(Boolean);
+  const tLv = monster.traitLevels || {};
   let traitHpMult = 1, traitAtkMult = 1, traitSpdMult = 1;
   let goldBonus = 0;
+  const TLVB = 0.10; // bonus per trait level
 
   for (const trait of allTraits) {
-    if (trait === 'tough')         traitHpMult  += 0.20;
-    if (trait === 'dark_power')  { traitAtkMult += 0.10; traitHpMult += 0.10; traitSpdMult += 0.10; }
-    if (trait === 'shadow')        traitSpdMult += 0.15;
-    if (trait === 'magic_affinity') specialDmg  += 0.25;
-    if (trait === 'fire')           traitAtkMult += 0.20;
-    if (trait === 'scavenger')      goldBonus    += 0.30;
-    if (trait === 'cunning')        evadeBonus   += 0.10;
-    if (trait === 'berserk')        lowHpAtk     += 0.30;
+    const lv = tLv[trait] || 0;
+    const mult = 1 + lv * TLVB; // e.g. lv2 = 1.2x the base effect
+    if (trait === 'tough')         traitHpMult  += 0.20 * mult;
+    if (trait === 'dark_power')  { traitAtkMult += 0.10 * mult; traitHpMult += 0.10 * mult; traitSpdMult += 0.10 * mult; }
+    if (trait === 'shadow')        traitSpdMult += 0.15 * mult;
+    if (trait === 'magic_affinity') specialDmg  += 0.25 * mult;
+    if (trait === 'fire')           traitAtkMult += 0.20 * mult;
+    if (trait === 'scavenger')      goldBonus    += 0.30 * mult;
+    if (trait === 'cunning')        evadeBonus   += 0.10 * mult;
+    if (trait === 'berserk')        lowHpAtk     += 0.30 * mult;
   }
 
   const maxHp  = Math.floor(baseHp  * traitHpMult)  + skillBonusHp;

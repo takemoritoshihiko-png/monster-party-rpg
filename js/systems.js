@@ -6,10 +6,12 @@ window.Systems = (() => {
   const D = window.GAME_DATA;
 
   // ---- Genetics / Breeding ----
+  const TRAIT_LEVEL_MAX = 5; // Max enhancement level per trait
+  const TRAIT_LEVEL_BONUS = 0.10; // +10% per level (base is level 0)
+
   function canBreed(mon1, mon2) {
     if (!mon1 || !mon2) return false;
     if (mon1.id === mon2.id) return false;
-    if (mon1.type !== mon2.type) return false;
     if (mon1.level < 5 || mon2.level < 5) return false;
     return true;
   }
@@ -17,7 +19,9 @@ window.Systems = (() => {
   function breed(mon1, mon2) {
     if (!canBreed(mon1, mon2)) return null;
 
-    const md = D.MONSTER_TYPES[mon1.type];
+    // Child type: random from parents
+    const childType = Math.random() < 0.5 ? mon1.type : mon2.type;
+    const md = D.MONSTER_TYPES[childType];
 
     // Stats: average of parents + random bonus
     const s1 = Game.getEffStats(mon1);
@@ -29,22 +33,48 @@ window.Systems = (() => {
       spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 + Math.random() * 3),
     };
 
-    // Traits inheritance
+    // Traits inheritance (from both parents + child species)
     const parentTraits = [...new Set([...mon1.traits, ...mon2.traits])].filter(Boolean);
     const childTraits = [];
     for (const t of parentTraits) {
       if (Math.random() < 0.6) childTraits.push(t);
     }
-    // If no traits inherited, at least get one from species
+    // If no traits inherited, at least get one from child's species
     if (childTraits.length === 0 && md.traits[0]) {
       childTraits.push(md.traits[0]);
+    }
+
+    // Trait enhancement: shared traits between parents get boosted
+    const traitLevels = {};
+    const p1Levels = mon1.traitLevels || {};
+    const p2Levels = mon2.traitLevels || {};
+    const p1AllTraits = [...(mon1.traits || []), ...(mon1.synthTraits || [])].filter(Boolean);
+    const p2AllTraits = [...(mon2.traits || []), ...(mon2.synthTraits || [])].filter(Boolean);
+
+    for (const t of childTraits) {
+      const baseLevel = Math.max(p1Levels[t] || 0, p2Levels[t] || 0);
+      // Both parents have this trait → enhance
+      if (p1AllTraits.includes(t) && p2AllTraits.includes(t)) {
+        traitLevels[t] = Math.min(TRAIT_LEVEL_MAX, baseLevel + 1);
+      } else {
+        traitLevels[t] = baseLevel;
+      }
     }
 
     // Synth traits inheritance (lower chance)
     const synthTraits = [];
     const parentSynth = [...new Set([...(mon1.synthTraits || []), ...(mon2.synthTraits || [])])];
     for (const t of parentSynth) {
-      if (Math.random() < 0.35) synthTraits.push(t);
+      if (Math.random() < 0.35) {
+        synthTraits.push(t);
+        // Enhance synth traits too if shared
+        const baseLevel = Math.max(p1Levels[t] || 0, p2Levels[t] || 0);
+        if (p1AllTraits.includes(t) && p2AllTraits.includes(t)) {
+          traitLevels[t] = Math.min(TRAIT_LEVEL_MAX, baseLevel + 1);
+        } else if (!traitLevels[t]) {
+          traitLevels[t] = baseLevel;
+        }
+      }
     }
 
     const generation = Math.max(mon1.generation, mon2.generation) + 1;
@@ -71,13 +101,14 @@ window.Systems = (() => {
       },
     };
 
-    const child = Game.createMonster(mon1.type, 1, {
+    const child = Game.createMonster(childType, 1, {
       statBonus,
       pedigree,
       generation,
       synthTraits,
     });
     child.traits = childTraits;
+    child.traitLevels = traitLevels;
 
     return child;
   }

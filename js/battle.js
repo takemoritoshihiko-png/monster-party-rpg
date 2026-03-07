@@ -352,6 +352,19 @@ window.BattleEngine = (() => {
     }
   }
 
+  function playerFlee() {
+    if (Math.random() < 0.5) {
+      addLog('逃走に成功した！');
+      battleState.phase = 'result';
+      battleState.result = 'flee';
+      return true;
+    } else {
+      addLog('逃げられなかった！');
+      afterPlayerAction();
+      return false;
+    }
+  }
+
   function playerSwitch(partyIndex) {
     const current = getCurrentPlayer();
     const target = battleState.playerParty[partyIndex];
@@ -691,6 +704,7 @@ window.BattleEngine = (() => {
     playerUseItem,
     playerCapture,
     playerSwitch,
+    playerFlee,
     getBattleRewards,
     applyRewards,
     applyLoss,
