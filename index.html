@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Party RPG</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ TITLE SCREEN ============ -->
+<div id="screen-title" class="screen active">
+  <div class="title-logo">
+    <h1>MONSTER PARTY</h1>
+    <div class="subtitle">RPG</div>
+  </div>
+
+  <div class="title-monster-showcase"></div>
+
+  <div class="title-buttons">
+    <button id="btn-newgame" class="btn primary">はじめから</button>
+    <button id="btn-continue" class="btn" disabled>つづきから</button>
+  </div>
+</div>
+
+<!-- Name Input Overlay -->
+<div id="name-input-overlay" class="name-input-overlay">
+  <div class="name-input-box">
+    <h2>プレイヤー名を入力</h2>
+    <p>あなたの名前を教えてください</p>
+    <input type="text" id="input-player-name" placeholder="プレイヤー" maxlength="12">
+    <div class="btn-row">
+      <button id="btn-cancel-name" class="btn">キャンセル</button>
+      <button id="btn-confirm-name" class="btn primary">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Starter Receive Overlay -->
+<div id="starter-overlay" class="starter-overlay">
+  <div class="starter-box">
+    <h2>最初の相棒を受け取った！</h2>
+    <canvas width="140" height="140"></canvas>
+    <div class="starter-name"></div>
+    <div class="starter-desc"></div>
+    <div class="starter-stats"></div>
+    <button id="btn-accept-starter" class="btn success">冒険に出る！</button>
+  </div>
+</div>
+
+<!-- ============ WORLD MAP SCREEN ============ -->
+<div id="screen-worldmap" class="screen">
+  <!-- Top Bar -->
+  <div class="worldmap-topbar">
+    <div class="topbar-left">
+      <div class="topbar-player" id="wm-player-name"></div>
+      <div class="topbar-gold" id="wm-gold"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn" onclick="UI.renderWorldMap()">更新</button>
+    </div>
+  </div>
+
+  <!-- Party Bar -->
+  <div class="worldmap-party-bar" id="wm-party-bar"></div>
+
+  <!-- Daily Quests -->
+  <div class="worldmap-daily">
+    <div class="daily-title">デイリークエスト</div>
+    <div class="daily-list" id="wm-daily-list"></div>
+  </div>
+
+  <!-- Area Map -->
+  <div class="worldmap-areas">
+    <div class="area-path" id="wm-area-path"></div>
+  </div>
+
+  <!-- Bottom Menu -->
+  <div class="worldmap-menu">
+    <button class="btn" data-menu="パーティ編成">パーティ</button>
+    <button class="btn" data-menu="ボックス">ボックス</button>
+    <button class="btn" data-menu="ショップ">ショップ</button>
+    <button class="btn" data-menu="合成">合成</button>
+    <button class="btn" data-menu="スキル">スキル</button>
+    <button class="btn" data-menu="繁殖">繁殖</button>
+    <button class="btn" data-menu="実績">実績</button>
+  </div>
+</div>
+
+<!-- ============ PARTY SCREEN ============ -->
+<div id="screen-party" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="party-back">戻る</button>
+    <div class="sub-topbar-title">パーティ編成</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="party-edit-area">
+    <div class="party-section">
+      <div class="party-section-title">パーティ <span id="party-count">0</span>/3</div>
+      <div class="party-grid" id="pe-party-list"></div>
+    </div>
+    <div class="party-section">
+      <div class="party-section-title">ボックス <span id="pe-box-count">0</span></div>
+      <div class="party-grid" id="pe-box-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BOX SCREEN ============ -->
+<div id="screen-box" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="box-back">戻る</button>
+    <div class="sub-topbar-title">ボックス <span id="box-total"></span></div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="box-content">
+    <div class="box-grid" id="bx-grid"></div>
+  </div>
+  <!-- Monster detail overlay -->
+  <div class="mon-detail-overlay" id="bx-detail" style="display:none">
+    <div class="mon-detail-box" id="bx-detail-box"></div>
+  </div>
+</div>
+
+<!-- ============ SYNTHESIS SCREEN ============ -->
+<div id="screen-synthesis" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="synth-back">戻る</button>
+    <div class="sub-topbar-title">合成</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="synth-content">
+    <!-- Step 1: select target monster -->
+    <div class="synth-step" id="synth-step1">
+      <div class="synth-step-title">1. 合成先のモンスターを選択</div>
+      <div class="synth-mon-list" id="synth-mon-list"></div>
+    </div>
+    <!-- Step 2: select fragment -->
+    <div class="synth-step" id="synth-step2" style="display:none">
+      <div class="synth-selected" id="synth-selected"></div>
+      <div class="synth-step-title">2. 吸収する欠片を選択（3個消費）</div>
+      <div class="synth-frag-list" id="synth-frag-list"></div>
+      <button class="btn" id="synth-step2-back" style="margin-top:12px">モンスター選択に戻る</button>
+    </div>
+    <!-- Step 3: result -->
+    <div class="synth-step" id="synth-step3" style="display:none">
+      <div class="synth-result" id="synth-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SHOP SCREEN ============ -->
+<div id="screen-shop" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="shop-back">戻る</button>
+    <div class="sub-topbar-title">ショップ</div>
+    <div class="topbar-gold" id="shop-gold" style="min-width:80px;text-align:right"></div>
+  </div>
+  <div class="shop-content">
+    <div class="shop-grid" id="shop-list"></div>
+  </div>
+</div>
+
+<!-- ============ ACHIEVEMENT SCREEN ============ -->
+<div id="screen-achievement" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="ach-back">戻る</button>
+    <div class="sub-topbar-title">実績</div>
+    <div class="ach-progress-label" id="ach-progress"></div>
+  </div>
+  <div class="ach-content">
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+</div>
+
+<!-- ============ SKILL TREE SCREEN ============ -->
+<div id="screen-skill" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="skill-back">戻る</button>
+    <div class="sub-topbar-title">スキルツリー</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="skill-content">
+    <!-- Monster selector -->
+    <div class="skill-mon-selector" id="sk-mon-list"></div>
+    <!-- Selected monster info -->
+    <div class="skill-mon-info" id="sk-mon-info" style="display:none"></div>
+    <!-- Skill tree display -->
+    <div class="skill-tree-area" id="sk-tree" style="display:none">
+      <div class="skill-route-tabs">
+        <button class="btn skill-tab active" data-route="atk">攻撃</button>
+        <button class="btn skill-tab" data-route="def">防御</button>
+        <button class="btn skill-tab" data-route="spd">速度</button>
+      </div>
+      <div class="skill-tree-nodes" id="sk-nodes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BREEDING SCREEN ============ -->
+<div id="screen-breed" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="breed-back">戻る</button>
+    <div class="sub-topbar-title">繁殖</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="breed-content">
+    <!-- Step 1: select parents -->
+    <div class="breed-step" id="breed-step1">
+      <div class="breed-step-title">親モンスターを2体選択（同種・Lv5以上）</div>
+      <div class="breed-selected-parents" id="breed-parents">
+        <div class="breed-parent-slot" id="breed-parent1">
+          <div class="breed-slot-label">親1</div>
+          <div class="breed-slot-empty">タップで選択</div>
+        </div>
+        <div class="breed-parent-cross">×</div>
+        <div class="breed-parent-slot" id="breed-parent2">
+          <div class="breed-slot-label">親2</div>
+          <div class="breed-slot-empty">タップで選択</div>
+        </div>
+      </div>
+      <button class="btn primary" id="breed-start" disabled>繁殖する</button>
+      <div class="breed-mon-list" id="breed-mon-list"></div>
+    </div>
+    <!-- Step 2: result -->
+    <div class="breed-step" id="breed-step2" style="display:none">
+      <div class="breed-result" id="breed-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BATTLE SCREEN ============ -->
+<div id="screen-battle" class="screen">
+  <!-- Battle top bar -->
+  <div class="battle-topbar">
+    <div class="battle-area-name" id="bt-area-name"></div>
+    <div class="battle-turn" id="bt-turn">Turn 1</div>
+  </div>
+
+  <!-- Battle field -->
+  <div class="battle-field">
+    <!-- Player side -->
+    <div class="battle-side player-side">
+      <div class="battle-side-label">PARTY</div>
+      <div class="battle-monsters" id="bt-player-party"></div>
+    </div>
+
+    <div class="battle-vs">VS</div>
+
+    <!-- Enemy side -->
+    <div class="battle-side enemy-side">
+      <div class="battle-side-label">ENEMY</div>
+      <div class="battle-monsters" id="bt-enemy-party"></div>
+    </div>
+  </div>
+
+  <!-- Battle log -->
+  <div class="battle-log" id="bt-log"></div>
+
+  <!-- Action menu (player turn) -->
+  <div class="battle-actions" id="bt-actions">
+    <button class="btn primary" id="bt-btn-attack">攻撃</button>
+    <button class="btn" id="bt-btn-guard">ガード</button>
+    <button class="btn warn" id="bt-btn-special" disabled>必殺技</button>
+    <button class="btn" id="bt-btn-item">アイテム</button>
+    <button class="btn" id="bt-btn-capture" disabled>捕獲</button>
+    <button class="btn" id="bt-btn-switch" disabled>交代</button>
+  </div>
+
+  <!-- Sub menus (hidden by default) -->
+  <div class="battle-submenu" id="bt-target-menu" style="display:none">
+    <div class="submenu-title" id="bt-submenu-title">対象を選択</div>
+    <div class="submenu-list" id="bt-target-list"></div>
+    <button class="btn" id="bt-target-cancel">戻る</button>
+  </div>
+
+  <div class="battle-submenu" id="bt-item-menu" style="display:none">
+    <div class="submenu-title">アイテムを選択</div>
+    <div class="submenu-list" id="bt-item-list"></div>
+    <button class="btn" id="bt-item-cancel">戻る</button>
+  </div>
+
+  <div class="battle-submenu" id="bt-switch-menu" style="display:none">
+    <div class="submenu-title">交代するモンスターを選択</div>
+    <div class="submenu-list" id="bt-switch-list"></div>
+    <button class="btn" id="bt-switch-cancel">戻る</button>
+  </div>
+
+  <!-- Result overlay -->
+  <div class="battle-result-overlay" id="bt-result" style="display:none">
+    <div class="battle-result-box" id="bt-result-box"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/save.js"></script>
+<script src="js/main.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/systems.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
