@@ -636,9 +636,9 @@ window.BattleEngine = (() => {
         const leveled = Game.addExp(original, rewards.totalExp);
         if (leveled) {
           levelUps.push(original.nickname);
-          // Level up already sets HP to max in addExp, keep it
         }
-        if (!leveled && mon.battleHp <= 0) {
+        // Revive defeated monsters with 1 HP
+        if (mon.battleHp <= 0 && original.hp <= 0) {
           original.hp = 1;
         }
       }

@@ -563,7 +563,7 @@ function calcStatBreakdown(monster) {
 
 // Exp needed to reach next level
 function expToLevel(level) {
-  return Math.floor(19.25 * Math.pow(1.15, level - 1));
+  return Math.floor(19.25 * Math.pow(1.25, level - 1));
 }
 
 // Calculate monster effective stats considering level, stage, traits, skills, equipment
