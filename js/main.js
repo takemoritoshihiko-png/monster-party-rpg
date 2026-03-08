@@ -62,6 +62,7 @@ window.Game = (() => {
       stage,
       level,
       exp: 0,
+      rarity: options.rarity || D.rollRarity(),
       traits: [...traits],
       synthTraits: options.synthTraits || [],
       skills: { atk: [], def: [], spd: [] },
@@ -111,6 +112,7 @@ window.Game = (() => {
         if (mon.level >= md.evolveLevel[i] && mon.stage < i) {
           mon.stage = i;
           mon.nickname = md.stages[i];
+          discoverMonster(mon.type, i);
           state.player.evolves++;
           break;
         }
@@ -124,9 +126,21 @@ window.Game = (() => {
     return leveledUp;
   }
 
+  function discoverMonster(type, stage) {
+    if (!state.dex) state.dex = {};
+    const key = type + '_' + stage;
+    state.dex[key] = true;
+  }
+
+  function isDiscovered(type, stage) {
+    if (!state.dex) return false;
+    return !!state.dex[type + '_' + stage];
+  }
+
   function addToBox(mon) {
     if (getAllMonsters().length >= 53) return false; // 50 box + 3 party max
     state.box.push(mon);
+    discoverMonster(mon.type, mon.stage);
     return true;
   }
 
@@ -209,9 +223,10 @@ window.Game = (() => {
 
   function startGame(playerName) {
     state.player.name = playerName || 'プレイヤー';
-    // Give starter slime
-    const starter = createMonster('slime', 1, { nickname: 'スライム' });
+    // Give starter slime (always ★3)
+    const starter = createMonster('slime', 1, { nickname: 'スライム', rarity: 3 });
     state.party.push(starter);
+    discoverMonster('slime', 0);
     state.currentScreen = 'worldmap';
     initDailyQuests();
     autoSave();
@@ -256,10 +271,14 @@ window.Game = (() => {
     if (saved) {
       state = saved;
       // Migrate: ensure all monsters have required fields
+      if (!state.dex) state.dex = {};
       const allMons = [...(state.party || []), ...(state.box || [])];
       for (const mon of allMons) {
         if (!mon.equipment) mon.equipment = { weapon: null, armor: null };
         if (!mon.traitLevels) mon.traitLevels = {};
+        if (!mon.rarity) mon.rarity = 1;
+        // Auto-discover existing monsters
+        state.dex[mon.type + '_' + mon.stage] = true;
       }
       initDailyQuests();
       return true;
@@ -301,6 +320,8 @@ window.Game = (() => {
     addFragment,
     checkAreaUnlock,
     generateId,
+    discoverMonster,
+    isDiscovered,
     initDailyQuests,
     updateDailyQuest,
     claimDailyQuest,

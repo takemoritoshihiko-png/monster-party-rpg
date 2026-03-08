@@ -204,6 +204,7 @@ window.BattleEngine = (() => {
     const { damage, isCrit } = calcDamage(player, enemy, false);
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${player.nickname}の攻撃！${enemy.nickname}に${damage}ダメージ！${critText}`);
+    SFX.attack();
     const defeated = applyDamage(enemy, damage, battleState.enemyParty);
 
     // Curse trait
@@ -258,6 +259,7 @@ window.BattleEngine = (() => {
     const { damage, isCrit } = calcDamage(player, target, true);
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${player.nickname}の必殺技！${target.nickname}に${damage}ダメージ！${critText}`);
+    SFX.attack();
     applyDamage(target, damage, battleState.enemyParty);
 
     player.specialCooldown = 5;
@@ -279,6 +281,7 @@ window.BattleEngine = (() => {
       const heal = Math.min(itemData.effect.heal, Game.getEffStats(player).maxHp - player.battleHp);
       player.battleHp = Math.min(Game.getEffStats(player).maxHp, player.battleHp + itemData.effect.heal);
       addLog(`${player.nickname}は${itemData.name}を使った！HPが${heal}回復した！`);
+      SFX.heal();
       Game.getState().player.itemsUsed++;
       Game.updateDailyQuest('item_use');
       afterPlayerAction();
@@ -317,17 +320,27 @@ window.BattleEngine = (() => {
       return false;
     }
 
-    // Capture rate calculation (higher base rate, wider window)
+    // Capture rate calculation
     const baseRate = (0.5 - hpPercent) / 0.5 * 0.5 + 0.35;
-    const levelDiff = Math.max(0, target.level - (player.level + 10));
-    const levelPenalty = Math.max(0.3, 1 - levelDiff * 0.03);
-    const rate = Math.min(0.95, baseRate * ballData.effect.catchRate * levelPenalty);
+    const lvDiff = target.level - player.level; // positive = enemy higher
+    let levelMod;
+    if (lvDiff >= 10) {
+      levelMod = 0.02; // almost 0%
+    } else if (lvDiff >= 5) {
+      levelMod = 0.30; // 70% down
+    } else if (lvDiff > 0) {
+      levelMod = 1 - lvDiff * 0.10; // -10% per level
+    } else {
+      levelMod = Math.min(1.5, 1 + Math.abs(lvDiff) * 0.05); // +5% per level
+    }
+    const rate = Math.min(0.95, baseRate * ballData.effect.catchRate * levelMod);
 
     addLog(`${ballData.name}を投げた！(成功率${Math.floor(rate * 100)}%)`);
 
     if (Math.random() < rate) {
       // Success!
       addLog(`やった！${target.nickname}を捕獲した！`);
+      SFX.capture();
       const captured = Game.createMonster(target.type, target.level);
       captured.battleHp = target.battleHp;
       captured.hp = target.battleHp;
@@ -405,11 +418,11 @@ window.BattleEngine = (() => {
       enemyAction(enemy, i);
     }
 
-    // Regeneration trait for active player monster only
+    // Regeneration trait for active player monster only (every 2 turns)
     const activePlayer = battleState.playerParty[battleState.currentPlayerIndex];
     if (activePlayer && activePlayer.battleHp > 0) {
       const s = Game.getEffStats(activePlayer);
-      if (s.allTraits.includes('regeneration')) {
+      if (s.allTraits.includes('regeneration') && battleState.turn % 2 === 1) {
         const heal = Math.max(1, Math.floor(s.maxHp * 0.05));
         activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
         addLog(`${activePlayer.nickname}の再生！HPが${heal}回復！`);
@@ -482,6 +495,7 @@ window.BattleEngine = (() => {
       let specDmg = calcDamage(enemy, target, true);
       let d = Math.floor(specDmg.damage * ngMult);
       addLog(`${enemy.nickname}の必殺技！${target.nickname}に${d}ダメージ！`);
+      SFX.damage();
       applyDamage(target, d, battleState.playerParty);
       if (d > 0) battleState.noDamageTaken = false;
 
@@ -503,6 +517,7 @@ window.BattleEngine = (() => {
     damage = Math.floor(damage * ngMult);
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${enemy.nickname}の攻撃！${target.nickname}に${damage}ダメージ！${critText}`);
+    SFX.damage();
     const defeated = applyDamage(target, damage, battleState.playerParty);
     if (damage > 0) battleState.noDamageTaken = false;
 

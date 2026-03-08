@@ -33,11 +33,24 @@ window.Systems = (() => {
       spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 + Math.random() * 3),
     };
 
-    // Traits inheritance (from both parents + child species)
+    // Child rarity: based on parents' average
+    const avgRarity = ((mon1.rarity || 1) + (mon2.rarity || 1)) / 2;
+    let childRarity = Math.round(avgRarity);
+    // Random ±1 variation
+    const rVar = Math.random();
+    if (rVar < 0.2) childRarity = Math.max(1, childRarity - 1);
+    else if (rVar < 0.35) childRarity = Math.min(5, childRarity + 1);
+    // ★5 can only come from ★5×★5 or ★4×★5 parents (avg >= 4.5)
+    if (childRarity >= 5 && avgRarity < 4.5) childRarity = 4;
+    childRarity = Math.max(1, Math.min(5, childRarity));
+
+    // Traits inheritance - higher rarity parents = higher inheritance rate
+    const avgParentRarity = avgRarity;
+    const traitInheritRate = 0.5 + avgParentRarity * 0.05; // 0.55 ~ 0.75
     const parentTraits = [...new Set([...mon1.traits, ...mon2.traits])].filter(Boolean);
     const childTraits = [];
     for (const t of parentTraits) {
-      if (Math.random() < 0.6) childTraits.push(t);
+      if (Math.random() < traitInheritRate) childTraits.push(t);
     }
     // If no traits inherited, at least get one from child's species
     if (childTraits.length === 0 && md.traits[0]) {
@@ -102,6 +115,7 @@ window.Systems = (() => {
     };
 
     const child = Game.createMonster(childType, 1, {
+      rarity: childRarity,
       statBonus,
       pedigree,
       generation,

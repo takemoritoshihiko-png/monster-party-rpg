@@ -141,11 +141,25 @@ window.UI = (() => {
     // Party bar
     renderPartyBar();
 
+    // Full heal button
+    updateFullHealBtn();
+
     // Daily quests
     renderDailyQuests();
 
     // Areas
     renderAreas();
+  }
+
+  function updateFullHealBtn() {
+    const btn = document.getElementById('wm-fullheal');
+    if (!btn) return;
+    const state = Game.getState();
+    const allFull = state.party.every(m => {
+      const s = Game.getEffStats(m);
+      return m.hp >= s.maxHp;
+    });
+    btn.disabled = state.player.gold < 50 || allFull || state.party.length === 0;
   }
 
   function renderPartyBar() {
@@ -250,6 +264,7 @@ window.UI = (() => {
     mon.hp = Math.min(stats.maxHp, mon.hp + itemData.effect.heal);
     const healed = mon.hp - before;
 
+    SFX.heal();
     showToast(`${mon.nickname}のHPが${healed}回復した！`);
     Game.autoSave();
     renderPartyBar();
@@ -424,8 +439,9 @@ window.UI = (() => {
         if (capPct <= 0.5) statusText = '捕獲可能！';
       }
 
+      const bri = D.getRarityInfo(mon.rarity);
       info.innerHTML = `
-        <div class="battle-mon-name">${mon.nickname}</div>
+        <div class="battle-mon-name">${mon.nickname} <span style="color:${bri.color};font-size:10px">${bri.label}</span></div>
         <div class="battle-mon-level">Lv.${mon.level}</div>
         <div class="battle-hp-bar"><div class="hp-fill" style="width:${hpPct}%;background:${hpColor}"></div></div>
         <div class="battle-hp-text">HP ${hp} / ${hpMax}</div>
@@ -638,6 +654,7 @@ window.UI = (() => {
       }
       if (levelUps.length > 0) {
         html += `<div class="reward-lvup">レベルアップ！ ${levelUps.join(', ')}</div>`;
+        SFX.levelUp();
       }
       if (bs.capturedMonster) {
         html += `<div class="reward-capture">${bs.capturedMonster.nickname} を捕獲！ボックスに追加しました</div>`;
@@ -932,6 +949,13 @@ window.UI = (() => {
       level.textContent = 'Lv.' + mon.level;
       card.appendChild(level);
 
+      const ri = D.getRarityInfo(mon.rarity);
+      const rarityEl = document.createElement('div');
+      rarityEl.className = 'box-card-rarity';
+      rarityEl.style.color = ri.color;
+      rarityEl.textContent = ri.label;
+      card.appendChild(rarityEl);
+
       if (inParty) {
         const badge = document.createElement('div');
         badge.className = 'box-card-badge';
@@ -963,7 +987,8 @@ window.UI = (() => {
     // Canvas placeholder
     html += '<div id="bx-detail-canvas-wrap" style="margin:0 auto 8px"></div>';
 
-    html += `<div class="detail-name">${mon.nickname}</div>`;
+    const ri = D.getRarityInfo(mon.rarity);
+    html += `<div class="detail-name">${mon.nickname} <span class="detail-rarity" style="color:${ri.color}">${ri.label}</span></div>`;
     html += `<div class="detail-level">Lv.${mon.level}  ${md.name}  世代${mon.generation}</div>`;
     html += `<div style="margin:4px 0 8px"><div class="battle-hp-bar" style="width:60%;margin:0 auto"><div class="hp-fill" style="width:${hpPct}%;background:${hpColor}"></div></div><div style="font-size:11px;color:#888;margin-top:2px">HP ${mon.hp} / ${stats.maxHp}</div></div>`;
 
@@ -1756,7 +1781,8 @@ window.UI = (() => {
 
     html += `<div id="breed-child-canvas-wrap"></div>`;
     html += `<div class="breed-child-info">`;
-    html += `<div class="breed-child-name">${child.nickname}</div>`;
+    const cri = D.getRarityInfo(child.rarity);
+    html += `<div class="breed-child-name">${child.nickname} <span style="color:${cri.color}">${cri.label}</span></div>`;
     html += `<div class="breed-child-stat">`;
     html += `世代: <span class="bonus">${child.generation}</span><br>`;
     const bonus = child.statBonus || {};
@@ -1834,12 +1860,31 @@ window.UI = (() => {
     showScreen('title');
     renderTitle();
 
+    // Unlock audio context on first interaction
+    document.addEventListener('click', () => SFX.unlock(), { once: true });
+
     // Event listeners
     document.getElementById('btn-newgame').addEventListener('click', onNewGame);
     document.getElementById('btn-continue').addEventListener('click', onContinue);
     document.getElementById('btn-confirm-name').addEventListener('click', onConfirmName);
     document.getElementById('btn-cancel-name').addEventListener('click', onCancelName);
     document.getElementById('btn-accept-starter').addEventListener('click', onAcceptStarter);
+
+    // Full heal button
+    document.getElementById('wm-fullheal').addEventListener('click', () => {
+      const state = Game.getState();
+      if (!Game.spendGold(50)) { showToast('ゴールドが足りません'); return; }
+      for (const mon of state.party) {
+        const s = Game.getEffStats(mon);
+        mon.hp = s.maxHp;
+      }
+      SFX.heal();
+      Game.autoSave();
+      showToast('パーティ全員のHPが全回復した！');
+      renderPartyBar();
+      updateFullHealBtn();
+      document.getElementById('wm-gold').textContent = state.player.gold.toLocaleString() + ' G';
+    });
 
     // Enter key for name input
     document.getElementById('input-player-name').addEventListener('keydown', (e) => {
@@ -1856,6 +1901,7 @@ window.UI = (() => {
         if (name === '合成') return openSynthScreen();
         if (name === 'スキル') return openSkillScreen();
         if (name === '繁殖') return openBreedScreen();
+        if (name === '図鑑') return openDexScreen();
         if (name === '実績') return openAchievementScreen();
         onMenuBtn(name);
       });
@@ -1893,6 +1939,123 @@ window.UI = (() => {
       showScreen('worldmap');
       renderWorldMap();
     });
+    document.getElementById('dex-back').addEventListener('click', () => {
+      showScreen('worldmap');
+      renderWorldMap();
+    });
+  }
+
+  // ================================================================
+  // DEX (ENCYCLOPEDIA) SCREEN
+  // ================================================================
+
+  function openDexScreen() {
+    showScreen('dex');
+    renderDex();
+  }
+
+  function renderDex() {
+    const grid = document.getElementById('dex-grid');
+    grid.innerHTML = '';
+    const types = Object.keys(D.MONSTER_TYPES);
+    let discovered = 0;
+    let total = 0;
+
+    types.forEach(type => {
+      const md = D.MONSTER_TYPES[type];
+      const typeSection = document.createElement('div');
+      typeSection.className = 'dex-type-section';
+
+      const title = document.createElement('div');
+      title.className = 'dex-type-title';
+      title.style.borderLeftColor = md.color;
+      title.textContent = md.name;
+      typeSection.appendChild(title);
+
+      const row = document.createElement('div');
+      row.className = 'dex-stage-row';
+
+      for (let s = 0; s < 4; s++) {
+        total++;
+        const known = Game.isDiscovered(type, s);
+        if (known) discovered++;
+
+        const cell = document.createElement('div');
+        cell.className = 'dex-cell' + (known ? ' discovered' : ' unknown');
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 72;
+        canvas.height = 72;
+        MonsterCanvas.drawMonster(canvas, type, s, [], known ? {} : { silhouette: true });
+
+        cell.appendChild(canvas);
+
+        const label = document.createElement('div');
+        label.className = 'dex-cell-name';
+        label.textContent = known ? md.stages[s] : '？？？';
+        cell.appendChild(label);
+
+        if (known) {
+          cell.addEventListener('click', () => showDexDetail(type, s));
+        }
+
+        row.appendChild(cell);
+      }
+
+      typeSection.appendChild(row);
+      grid.appendChild(typeSection);
+    });
+
+    document.getElementById('dex-progress').textContent = `${discovered}/${total}`;
+  }
+
+  function showDexDetail(type, stage) {
+    const overlay = document.getElementById('dex-detail');
+    const box = document.getElementById('dex-detail-box');
+    overlay.style.display = 'flex';
+
+    const md = D.MONSTER_TYPES[type];
+    const dummy = Game.createMonster(type, md.evolveLevel[stage] || 1, { rarity: 3 });
+    dummy.stage = stage;
+    const stats = D.calcEffectiveStats(dummy);
+
+    let html = '<div id="dex-detail-canvas-wrap" style="margin:0 auto 8px"></div>';
+    html += `<div class="detail-name">${md.stages[stage]}</div>`;
+    html += `<div class="detail-level">${md.name} - 進化段階${stage + 1}</div>`;
+    html += `<div style="font-size:12px;color:#90CAF9;margin:8px 0">${md.description}</div>`;
+
+    // Base stats at ★3
+    html += `<div class="detail-stats-grid">
+      <div class="detail-stat"><div class="ds-label">HP</div><div class="ds-val">${stats.maxHp}</div></div>
+      <div class="detail-stat"><div class="ds-label">ATK</div><div class="ds-val">${stats.atk}</div></div>
+      <div class="detail-stat"><div class="ds-label">DEF</div><div class="ds-val">${stats.def}</div></div>
+      <div class="detail-stat"><div class="ds-label">SPD</div><div class="ds-val">${stats.spd}</div></div>
+    </div>`;
+    html += `<div style="font-size:10px;color:#666;margin-top:2px">※★3基準のステータス</div>`;
+
+    // Traits
+    const traits = md.traits.filter(Boolean);
+    if (traits.length > 0) {
+      const traitText = traits.map(t => {
+        const td = D.TRAITS[t];
+        return td ? `${td.name}: ${td.description}` : t;
+      }).join('<br>');
+      html += `<div class="detail-traits">特性:<br>${traitText}</div>`;
+    }
+
+    html += `<button class="btn" id="dex-detail-close" style="margin-top:12px;width:100%">閉じる</button>`;
+    box.innerHTML = html;
+
+    const wrap = document.getElementById('dex-detail-canvas-wrap');
+    const c = document.createElement('canvas');
+    c.width = 120;
+    c.height = 120;
+    MonsterCanvas.drawMonster(c, type, stage, []);
+    wrap.appendChild(c);
+
+    document.getElementById('dex-detail-close').addEventListener('click', () => {
+      overlay.style.display = 'none';
+    });
   }
 
   return {
@@ -1913,6 +2076,7 @@ window.UI = (() => {
     openSkillScreen,
     openBreedScreen,
     openAchievementScreen,
+    openDexScreen,
   };
 })();
 

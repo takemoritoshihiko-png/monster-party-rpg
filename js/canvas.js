@@ -48,8 +48,16 @@ function drawMonster(canvas, monsterType, stage, synthTraits = [], options = {})
       const dw = img.naturalWidth * ratio;
       const dh = img.naturalHeight * ratio;
       ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
-      // Synthesis overlay effects
-      drawSynthOverlays(ctx, cx, cy, scale, synthTraits);
+      // Silhouette mode
+      if (options.silhouette) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = '#1a1a3e';
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+      } else {
+        // Synthesis overlay effects
+        drawSynthOverlays(ctx, cx, cy, scale, synthTraits);
+      }
     };
     if (img.complete && img.naturalWidth > 0) {
       drawImg();

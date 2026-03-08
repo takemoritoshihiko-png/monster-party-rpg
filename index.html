@@ -64,9 +64,12 @@
   <!-- Party Bar -->
   <div class="worldmap-party-bar" id="wm-party-bar"></div>
 
-  <!-- Daily Quests -->
+  <!-- Full Heal + Daily Quests -->
   <div class="worldmap-daily">
-    <div class="daily-title">デイリークエスト</div>
+    <div class="daily-header">
+      <div class="daily-title">デイリークエスト</div>
+      <button class="btn wm-fullheal-btn" id="wm-fullheal">全回復 50G</button>
+    </div>
     <div class="daily-list" id="wm-daily-list"></div>
   </div>
 
@@ -83,6 +86,7 @@
     <button class="btn" data-menu="合成">合成</button>
     <button class="btn" data-menu="スキル">スキル</button>
     <button class="btn" data-menu="繁殖">繁殖</button>
+    <button class="btn" data-menu="図鑑">図鑑</button>
     <button class="btn" data-menu="実績">実績</button>
   </div>
 </div>
@@ -229,6 +233,22 @@
   </div>
 </div>
 
+<!-- ============ DEX (ENCYCLOPEDIA) SCREEN ============ -->
+<div id="screen-dex" class="screen">
+  <div class="sub-topbar">
+    <button class="btn" id="dex-back">戻る</button>
+    <div class="sub-topbar-title">モンスター図鑑</div>
+    <div class="dex-progress-label" id="dex-progress"></div>
+  </div>
+  <div class="dex-content">
+    <div class="dex-grid" id="dex-grid"></div>
+  </div>
+  <!-- Dex detail overlay -->
+  <div class="dex-detail-overlay" id="dex-detail" style="display:none">
+    <div class="dex-detail-box" id="dex-detail-box"></div>
+  </div>
+</div>
+
 <!-- ============ BATTLE SCREEN ============ -->
 <div id="screen-battle" class="screen">
   <!-- Battle top bar -->
@@ -293,6 +313,7 @@
   </div>
 </div>
 
+<script src="js/sound.js"></script>
 <script src="js/data.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/save.js"></script>

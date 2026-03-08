@@ -94,7 +94,7 @@ const MONSTER_TYPES = {
 const TRAITS = {
   regeneration: {
     name: '再生',
-    description: '毎ターン最大HPの5%を回復する',
+    description: '2ターンに1回、最大HPの5%を回復する',
     icon: '♻',
   },
   undead: {
@@ -334,9 +334,32 @@ const DAILY_QUEST_POOL = [
   { id: 'no_dmg',    name: '無傷の勝利',   desc: '誰もHPを失わずに勝利する',    goal: 1,  type: 'no_dmg',  reward: 200 },
 ];
 
+// Rarity system
+const RARITY_TABLE = [
+  { star: 1, weight: 49, statMult: 1.0,  color: '#B0BEC5', label: '★' },
+  { star: 2, weight: 30, statMult: 1.15, color: '#4CAF50', label: '★★' },
+  { star: 3, weight: 15, statMult: 1.35, color: '#42A5F5', label: '★★★' },
+  { star: 4, weight: 5,  statMult: 1.65, color: '#AB47BC', label: '★★★★' },
+  { star: 5, weight: 1,  statMult: 2.0,  color: '#FFD54F', label: '★★★★★' },
+];
+
+function rollRarity() {
+  const total = RARITY_TABLE.reduce((s, r) => s + r.weight, 0);
+  let rand = Math.random() * total;
+  for (const r of RARITY_TABLE) {
+    rand -= r.weight;
+    if (rand <= 0) return r.star;
+  }
+  return 1;
+}
+
+function getRarityInfo(star) {
+  return RARITY_TABLE[(star || 1) - 1];
+}
+
 // Exp needed to reach next level
 function expToLevel(level) {
-  return Math.floor(50 * Math.pow(1.3, level - 1));
+  return Math.floor(38.5 * Math.pow(1.3, level - 1));
 }
 
 // Calculate monster effective stats considering level, stage, traits, skills, equipment
@@ -346,11 +369,14 @@ function calcEffectiveStats(monster) {
   const sm = stageMultipliers[monster.stage] || 1.0;
   const lv = monster.level;
 
-  // Base formula: baseStats * stageMultiplier * (1 + level * 0.08)
-  let baseHp  = Math.floor(md.baseStats.hp  * sm * (1 + lv * 0.08));
-  let baseAtk = Math.floor(md.baseStats.atk * sm * (1 + lv * 0.08));
-  let baseDef = Math.floor(md.baseStats.def * sm * (1 + lv * 0.08));
-  let baseSpd = Math.floor(md.baseStats.spd * sm * (1 + lv * 0.08));
+  // Rarity multiplier
+  const rarityMult = getRarityInfo(monster.rarity || 1).statMult;
+
+  // Base formula: baseStats * stageMultiplier * (1 + level * 0.08) * rarityMult
+  let baseHp  = Math.floor(md.baseStats.hp  * sm * (1 + lv * 0.08) * rarityMult);
+  let baseAtk = Math.floor(md.baseStats.atk * sm * (1 + lv * 0.08) * rarityMult);
+  let baseDef = Math.floor(md.baseStats.def * sm * (1 + lv * 0.08) * rarityMult);
+  let baseSpd = Math.floor(md.baseStats.spd * sm * (1 + lv * 0.08) * rarityMult);
 
   // Skill bonuses (additive flat)
   let skillBonusHp = 0, skillBonusAtk = 0, skillBonusDef = 0, skillBonusSpd = 0;
@@ -453,8 +479,11 @@ return {
   AREAS,
   ACHIEVEMENTS,
   DAILY_QUEST_POOL,
+  RARITY_TABLE,
   expToLevel,
   calcEffectiveStats,
+  rollRarity,
+  getRarityInfo,
 };
 
 })();
