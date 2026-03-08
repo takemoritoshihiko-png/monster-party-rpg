@@ -1061,6 +1061,114 @@ body {
   border-color: #FFB74D;
   background: rgba(255,183,77,0.08);
 }
+/* ---- Rarity Synthesis ---- */
+.rsynth-box {
+  background: linear-gradient(180deg, #1a1a3e, #0d0d2a);
+  border: 2px solid #AB47BC;
+  border-radius: 16px;
+  padding: 20px;
+  width: 420px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: center;
+}
+.rsynth-header h3 {
+  margin: 0 0 6px;
+  color: #CE93D8;
+  font-size: 18px;
+}
+.rsynth-header p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #999;
+}
+.rsynth-selected {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.rsynth-slot {
+  width: 72px;
+  min-height: 80px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 6px 4px;
+  cursor: pointer;
+  text-align: center;
+}
+.rsynth-slot canvas {
+  display: block;
+  margin: 0 auto;
+  width: 56px;
+  height: 56px;
+}
+.rsynth-slot-label {
+  font-size: 10px;
+  color: #ccc;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.rsynth-slot-empty {
+  font-size: 24px;
+  color: #555;
+  line-height: 72px;
+}
+.rsynth-count {
+  font-size: 14px;
+  color: #CE93D8;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.rsynth-mon-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.rsynth-mon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #222;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.rsynth-mon-row:hover {
+  background: rgba(171,71,188,0.1);
+}
+.rsynth-mon-row canvas {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.rsynth-mon-info {
+  text-align: left;
+  font-size: 13px;
+  color: #ddd;
+}
+.rsynth-result-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #CE93D8;
+  margin-bottom: 4px;
+}
+.rsynth-result-name {
+  font-size: 16px;
+  color: #fff;
+  font-weight: bold;
+}
+.rsynth-result-rarity {
+  font-size: 14px;
+  margin: 6px 0;
+}
+.rsynth-result-stats {
+  font-size: 12px;
+  color: #90CAF9;
+}
+
 .shop-category-header {
   font-size: 14px;
   font-weight: bold;

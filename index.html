@@ -115,7 +115,7 @@
   <div class="sub-topbar">
     <button class="btn" id="box-back">戻る</button>
     <div class="sub-topbar-title">ボックス <span id="box-total"></span></div>
-    <div style="width:64px"></div>
+    <button class="btn" id="box-rarity-synth-btn">レアリティ合成</button>
   </div>
   <div class="box-content">
     <div class="box-grid" id="bx-grid"></div>
@@ -123,6 +123,22 @@
   <!-- Monster detail overlay -->
   <div class="mon-detail-overlay" id="bx-detail" style="display:none">
     <div class="mon-detail-box" id="bx-detail-box"></div>
+  </div>
+  <!-- Rarity Synthesis overlay -->
+  <div class="mon-detail-overlay" id="rsynth-overlay" style="display:none">
+    <div class="rsynth-box">
+      <div class="rsynth-header">
+        <h3>レアリティ合成</h3>
+        <p>同じ種類・同じレアリティのモンスター4体を合成して<br>レアリティを1段階アップ</p>
+      </div>
+      <div class="rsynth-selected" id="rsynth-selected"></div>
+      <div class="rsynth-count" id="rsynth-count">0 / 4</div>
+      <button class="btn primary" id="rsynth-exec" disabled>合成する</button>
+      <div class="rsynth-mon-list" id="rsynth-mon-list"></div>
+      <button class="btn" id="rsynth-cancel" style="margin-top:12px;width:100%">戻る</button>
+      <!-- Result -->
+      <div class="rsynth-result" id="rsynth-result" style="display:none"></div>
+    </div>
   </div>
 </div>
 

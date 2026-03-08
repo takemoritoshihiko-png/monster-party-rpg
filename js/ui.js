@@ -1202,6 +1202,207 @@ window.UI = (() => {
   }
 
   // ================================================================
+  // RARITY SYNTHESIS
+  // ================================================================
+
+  let rsynthSelected = [];
+
+  function openRaritySynth() {
+    rsynthSelected = [];
+    const overlay = document.getElementById('rsynth-overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('rsynth-result').style.display = 'none';
+    document.getElementById('rsynth-selected').style.display = '';
+    document.getElementById('rsynth-count').style.display = '';
+    document.getElementById('rsynth-exec').style.display = '';
+    document.getElementById('rsynth-mon-list').style.display = '';
+    document.getElementById('rsynth-cancel').style.display = '';
+    renderRaritySynth();
+  }
+
+  function closeRaritySynth() {
+    document.getElementById('rsynth-overlay').style.display = 'none';
+    rsynthSelected = [];
+  }
+
+  function renderRaritySynth() {
+    const state = Game.getState();
+    const partyIds = new Set(state.party.map(m => m.id));
+    // Only box monsters (not in party), not ★5
+    const eligible = state.box.filter(m => !partyIds.has(m.id) && (m.rarity || 1) < 5);
+
+    // Selected area
+    const selArea = document.getElementById('rsynth-selected');
+    selArea.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'rsynth-slot';
+      if (rsynthSelected[i]) {
+        const mon = rsynthSelected[i];
+        const ri = D.getRarityInfo(mon.rarity);
+        const c = document.createElement('canvas');
+        c.width = 56; c.height = 56;
+        MonsterCanvas.drawMonster(c, mon.type, mon.stage, mon.synthTraits || []);
+        slot.appendChild(c);
+        const label = document.createElement('div');
+        label.className = 'rsynth-slot-label';
+        label.innerHTML = `${mon.nickname}<br><span style="color:${ri.color}">${ri.label}</span>`;
+        slot.appendChild(label);
+        slot.addEventListener('click', () => {
+          rsynthSelected.splice(i, 1);
+          renderRaritySynth();
+        });
+      } else {
+        slot.innerHTML = '<div class="rsynth-slot-empty">?</div>';
+      }
+      selArea.appendChild(slot);
+    }
+
+    // Count
+    document.getElementById('rsynth-count').textContent = rsynthSelected.length + ' / 4';
+
+    // Validate: all same type & same rarity
+    const canExec = rsynthSelected.length === 4
+      && new Set(rsynthSelected.map(m => m.type)).size === 1
+      && new Set(rsynthSelected.map(m => m.rarity)).size === 1;
+    document.getElementById('rsynth-exec').disabled = !canExec;
+
+    // Monster list
+    const list = document.getElementById('rsynth-mon-list');
+    list.innerHTML = '';
+
+    const selectedIds = new Set(rsynthSelected.map(m => m.id));
+    // If we have 1+ selected, filter to same type & rarity
+    let filtered = eligible.filter(m => !selectedIds.has(m.id));
+    if (rsynthSelected.length > 0) {
+      const refType = rsynthSelected[0].type;
+      const refRarity = rsynthSelected[0].rarity;
+      filtered = filtered.filter(m => m.type === refType && m.rarity === refRarity);
+    }
+
+    if (filtered.length === 0 && rsynthSelected.length === 0) {
+      list.innerHTML = '<div style="color:#666;font-size:13px;text-align:center;padding:16px">合成可能なモンスターがいません</div>';
+    }
+
+    filtered.forEach(mon => {
+      const row = document.createElement('div');
+      row.className = 'rsynth-mon-row';
+      const c = document.createElement('canvas');
+      c.width = 48; c.height = 48;
+      MonsterCanvas.drawMonster(c, mon.type, mon.stage, mon.synthTraits || []);
+      row.appendChild(c);
+
+      const ri = D.getRarityInfo(mon.rarity);
+      const info = document.createElement('div');
+      info.className = 'rsynth-mon-info';
+      info.innerHTML = `<div>${mon.nickname} Lv.${mon.level}</div><div style="color:${ri.color};font-size:11px">${ri.label}</div>`;
+      row.appendChild(info);
+
+      if (rsynthSelected.length < 4) {
+        row.addEventListener('click', () => {
+          rsynthSelected.push(mon);
+          renderRaritySynth();
+        });
+      } else {
+        row.style.opacity = '0.4';
+      }
+
+      list.appendChild(row);
+    });
+  }
+
+  function executeRaritySynth() {
+    if (rsynthSelected.length !== 4) return;
+    const type = rsynthSelected[0].type;
+    const oldRarity = rsynthSelected[0].rarity;
+    const newRarity = oldRarity + 1;
+
+    // Average stats
+    const avgLevel = Math.round(rsynthSelected.reduce((s, m) => s + m.level, 0) / 4);
+    const avgBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+    for (const m of rsynthSelected) {
+      const b = m.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
+      avgBonus.hp += b.hp; avgBonus.atk += b.atk;
+      avgBonus.def += b.def; avgBonus.spd += b.spd;
+    }
+    avgBonus.hp = Math.round(avgBonus.hp / 4);
+    avgBonus.atk = Math.round(avgBonus.atk / 4);
+    avgBonus.def = Math.round(avgBonus.def / 4);
+    avgBonus.spd = Math.round(avgBonus.spd / 4);
+
+    // Collect traits
+    const allTraits = [...new Set(rsynthSelected.flatMap(m => m.traits || []))].filter(Boolean);
+    const allSynthTraits = [...new Set(rsynthSelected.flatMap(m => m.synthTraits || []))].filter(Boolean);
+
+    // Best trait levels
+    const bestTraitLevels = {};
+    for (const m of rsynthSelected) {
+      for (const [k, v] of Object.entries(m.traitLevels || {})) {
+        bestTraitLevels[k] = Math.max(bestTraitLevels[k] || 0, v);
+      }
+    }
+
+    // Best generation
+    const maxGen = Math.max(...rsynthSelected.map(m => m.generation || 1));
+
+    // Remove 4 monsters from box
+    for (const m of rsynthSelected) {
+      Game.removeFromBox(m.id);
+    }
+
+    // Create new monster
+    const child = Game.createMonster(type, avgLevel, {
+      rarity: newRarity,
+      statBonus: avgBonus,
+      generation: maxGen,
+    });
+    child.traits = allTraits;
+    child.synthTraits = allSynthTraits;
+    child.traitLevels = bestTraitLevels;
+    Game.addToBox(child);
+    Game.autoSave();
+    SFX.levelUp();
+
+    // Show result
+    const ri = D.getRarityInfo(newRarity);
+    const oldRi = D.getRarityInfo(oldRarity);
+    const stats = Game.getEffStats(child);
+    const resultDiv = document.getElementById('rsynth-result');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+      <div class="rsynth-result-title">合成成功！</div>
+      <div id="rsynth-result-canvas" style="margin:8px auto"></div>
+      <div class="rsynth-result-name">${child.nickname}</div>
+      <div class="rsynth-result-rarity">
+        <span style="color:${oldRi.color}">${oldRi.label}</span>
+        → <span style="color:${ri.color};font-size:18px">${ri.label}</span>
+      </div>
+      <div class="rsynth-result-stats">
+        Lv.${child.level} HP:${stats.maxHp} ATK:${stats.atk} DEF:${stats.def} SPD:${stats.spd}
+      </div>
+      <button class="btn primary" id="rsynth-result-ok" style="margin-top:12px;width:100%">OK</button>
+    `;
+
+    const wrap = document.getElementById('rsynth-result-canvas');
+    const c = document.createElement('canvas');
+    c.width = 100; c.height = 100;
+    MonsterCanvas.drawMonster(c, child.type, child.stage, child.synthTraits || []);
+    wrap.appendChild(c);
+
+    document.getElementById('rsynth-result-ok').addEventListener('click', () => {
+      closeRaritySynth();
+      renderBox();
+    });
+
+    // Hide selection UI
+    document.getElementById('rsynth-selected').style.display = 'none';
+    document.getElementById('rsynth-count').style.display = 'none';
+    document.getElementById('rsynth-exec').style.display = 'none';
+    document.getElementById('rsynth-mon-list').style.display = 'none';
+    document.getElementById('rsynth-cancel').style.display = 'none';
+  }
+
+  // ================================================================
   // SHOP SCREEN
   // ================================================================
 
@@ -1940,6 +2141,15 @@ window.UI = (() => {
     document.getElementById('box-back').addEventListener('click', () => {
       showScreen('worldmap');
       renderWorldMap();
+    });
+    document.getElementById('box-rarity-synth-btn').addEventListener('click', () => {
+      openRaritySynth();
+    });
+    document.getElementById('rsynth-cancel').addEventListener('click', () => {
+      closeRaritySynth();
+    });
+    document.getElementById('rsynth-exec').addEventListener('click', () => {
+      executeRaritySynth();
     });
     document.getElementById('shop-back').addEventListener('click', () => {
       showScreen('worldmap');
