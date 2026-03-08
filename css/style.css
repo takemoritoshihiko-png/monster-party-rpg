@@ -801,6 +801,8 @@ body {
 }
 .detail-stat .ds-label { color: #78909C; font-size: 11px; }
 .detail-stat .ds-val { color: #fff; font-weight: bold; }
+.detail-stat .ds-bonus { font-size: 10px; color: #999; margin-top: 1px; }
+.ds-breed-bonus { color: #66BB6A; font-weight: bold; }
 .trait-lv {
   color: #FFD54F;
   font-weight: bold;

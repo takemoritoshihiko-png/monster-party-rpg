@@ -992,11 +992,21 @@ window.UI = (() => {
     html += `<div class="detail-level">Lv.${mon.level}  ${md.name}  世代${mon.generation}</div>`;
     html += `<div style="margin:4px 0 8px"><div class="battle-hp-bar" style="width:60%;margin:0 auto"><div class="hp-fill" style="width:${hpPct}%;background:${hpColor}"></div></div><div style="font-size:11px;color:#888;margin-top:2px">HP ${mon.hp} / ${stats.maxHp}</div></div>`;
 
+    const b = mon.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
+    const hasBonus = b.hp || b.atk || b.def || b.spd;
+
+    function statLine(label, total, bonus) {
+      if (hasBonus && bonus > 0) {
+        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">ベース${total - bonus} <span class="ds-breed-bonus">+${bonus}</span></div></div>`;
+      }
+      return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div></div>`;
+    }
+
     html += `<div class="detail-stats-grid">
-      <div class="detail-stat"><div class="ds-label">HP</div><div class="ds-val">${stats.maxHp}</div></div>
-      <div class="detail-stat"><div class="ds-label">ATK</div><div class="ds-val">${stats.atk}</div></div>
-      <div class="detail-stat"><div class="ds-label">DEF</div><div class="ds-val">${stats.def}</div></div>
-      <div class="detail-stat"><div class="ds-label">SPD</div><div class="ds-val">${stats.spd}</div></div>
+      ${statLine('HP', stats.maxHp, b.hp)}
+      ${statLine('ATK', stats.atk, b.atk)}
+      ${statLine('DEF', stats.def, b.def)}
+      ${statLine('SPD', stats.spd, b.spd)}
     </div>`;
 
     // EXP
@@ -1190,14 +1200,17 @@ window.UI = (() => {
 
   function refreshDetailStats(mon) {
     const stats = Game.getEffStats(mon);
+    const b = mon.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
+    const hasBonus = b.hp || b.atk || b.def || b.spd;
+    function sl(label, total, bonus) {
+      if (hasBonus && bonus > 0) {
+        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">ベース${total - bonus} <span class="ds-breed-bonus">+${bonus}</span></div></div>`;
+      }
+      return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div></div>`;
+    }
     const grid = document.querySelector('.detail-stats-grid');
     if (grid) {
-      grid.innerHTML = `
-        <div class="detail-stat"><div class="ds-label">HP</div><div class="ds-val">${stats.maxHp}</div></div>
-        <div class="detail-stat"><div class="ds-label">ATK</div><div class="ds-val">${stats.atk}</div></div>
-        <div class="detail-stat"><div class="ds-label">DEF</div><div class="ds-val">${stats.def}</div></div>
-        <div class="detail-stat"><div class="ds-label">SPD</div><div class="ds-val">${stats.spd}</div></div>
-      `;
+      grid.innerHTML = `${sl('HP', stats.maxHp, b.hp)}${sl('ATK', stats.atk, b.atk)}${sl('DEF', stats.def, b.def)}${sl('SPD', stats.spd, b.spd)}`;
     }
   }
 
