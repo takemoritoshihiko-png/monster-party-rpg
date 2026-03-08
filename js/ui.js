@@ -1358,8 +1358,11 @@ window.UI = (() => {
     // Best generation
     const maxGen = Math.max(...rsynthSelected.map(m => m.generation || 1));
 
-    // Remove 4 monsters from box
+    // Return equipment and remove 4 monsters from box
     for (const m of rsynthSelected) {
+      const eq = m.equipment || {};
+      if (eq.weapon) Game.addItem(eq.weapon);
+      if (eq.armor) Game.addItem(eq.armor);
       Game.removeFromBox(m.id);
     }
 

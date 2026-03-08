@@ -588,16 +588,17 @@ window.BattleEngine = (() => {
     Game.addGold(rewards.totalGold);
     Game.updateDailyQuest('gold', rewards.totalGold);
 
-    // Distribute exp to alive party members
-    const alive = battleState.playerParty.filter(m => m.battleHp > 0);
-    const expEach = Math.floor(rewards.totalExp / Math.max(1, alive.length));
+    // Distribute exp: active fighter gets 70%, reserves get 15% each
+    const activeMon = battleState.playerParty[battleState.currentPlayerIndex];
+    const mainExp = Math.floor(rewards.totalExp * 0.70);
+    const subExp = Math.floor(rewards.totalExp * 0.15);
 
-    for (const mon of alive) {
-      // Find original monster in party
+    for (const mon of battleState.playerParty) {
       const original = Game.getState().party.find(m => m.id === mon.id);
       if (original) {
-        original.hp = mon.battleHp;
-        const leveled = Game.addExp(original, expEach);
+        if (mon.battleHp > 0) original.hp = mon.battleHp;
+        const exp = (mon.id === activeMon?.id) ? mainExp : subExp;
+        const leveled = Game.addExp(original, exp);
         if (leveled) levelUps.push(original.nickname);
       }
     }

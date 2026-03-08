@@ -152,6 +152,13 @@ window.Systems = (() => {
     const p1 = findAndRemove(mon1Id);
     const p2 = findAndRemove(mon2Id);
 
+    // Return equipment to inventory
+    for (const p of [p1, p2]) {
+      if (!p || !p.equipment) continue;
+      if (p.equipment.weapon) Game.addItem(p.equipment.weapon);
+      if (p.equipment.armor) Game.addItem(p.equipment.armor);
+    }
+
     // Add to pedigree records
     if (p1) state.pedigreeRecords.push({
       name: p1.nickname, type: p1.type, level: p1.level,
