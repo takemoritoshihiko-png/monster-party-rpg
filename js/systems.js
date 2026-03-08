@@ -78,11 +78,15 @@ window.Systems = (() => {
       }
     }
 
-    // Synth traits inheritance (lower chance)
+    // Synth traits inheritance
     const synthTraits = [];
-    const parentSynth = [...new Set([...(mon1.synthTraits || []), ...(mon2.synthTraits || [])])];
+    const p1Synth = new Set(mon1.synthTraits || []);
+    const p2Synth = new Set(mon2.synthTraits || []);
+    const parentSynth = [...new Set([...p1Synth, ...p2Synth])];
     for (const t of parentSynth) {
-      if (Math.random() < 0.35) {
+      const bothHave = p1Synth.has(t) && p2Synth.has(t);
+      const inheritRate = bothHave ? 0.80 : 0.50;
+      if (Math.random() < inheritRate) {
         synthTraits.push(t);
         // Enhance synth traits too if shared
         const baseLevel = Math.max(p1Levels[t] || 0, p2Levels[t] || 0);
