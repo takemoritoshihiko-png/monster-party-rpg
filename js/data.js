@@ -218,6 +218,25 @@ const ITEMS = {
   leather_armor:{ name: '革の鎧',        type: 'armor',      desc: 'DEF+5',                   effect: { def: 5 },            buyPrice: 200, sellPrice: 100 },
   iron_armor:   { name: '鉄の鎧',        type: 'armor',      desc: 'DEF+12',                  effect: { def: 12 },           buyPrice: 500, sellPrice: 250 },
   magic_robe:   { name: '魔法のローブ',  type: 'armor',      desc: 'DEF+6、SPD+5',            effect: { def: 6, spd: 5 },    buyPrice: 600, sellPrice: 300 },
+  hero_sword:   { name: '勇者の剣',    type: 'weapon',     desc: 'ATK+20',                  effect: { atk: 20 },           buyPrice: 800, sellPrice: 400, set: 'hero' },
+  hero_armor:   { name: '勇者の鎧',    type: 'armor',      desc: 'DEF+20',                  effect: { def: 20 },           buyPrice: 900, sellPrice: 450, set: 'hero' },
+  legend_sword: { name: '英雄の剣',    type: 'weapon',     desc: 'ATK+15、SPD+10',          effect: { atk: 15, spd: 10 },  buyPrice: 1100, sellPrice: 550, set: 'legend' },
+  legend_armor: { name: '英雄の鎧',    type: 'armor',      desc: 'DEF+15、HP+30',           effect: { def: 15, maxHp: 30 },buyPrice: 1200, sellPrice: 600, set: 'legend' },
+};
+
+const SET_BONUSES = {
+  hero: {
+    name: '戦士セット',
+    pieces: ['hero_sword', 'hero_armor'],
+    bonus: { maxHp: 50 },
+    desc: 'セット効果: HP+50',
+  },
+  legend: {
+    name: '英雄セット',
+    pieces: ['legend_sword', 'legend_armor'],
+    bonus: { catchRateBonus: 0.10 },
+    desc: 'セット効果: 捕獲成功率+10%',
+  },
 };
 
 const SHOP_INVENTORY = [
@@ -230,9 +249,13 @@ const SHOP_INVENTORY = [
   { id: 'ball_ultra',    unlockArea: 2 },
   { id: 'steel_sword',   unlockArea: 2 },
   { id: 'iron_armor',    unlockArea: 2 },
-  { id: 'magic_staff',   unlockArea: 3 },
-  { id: 'magic_robe',    unlockArea: 3 },
-  { id: 'elixir',        unlockArea: 4 },
+  { id: 'magic_staff',   unlockArea: 6 },
+  { id: 'magic_robe',    unlockArea: 6 },
+  { id: 'elixir',        unlockArea: 7 },
+  { id: 'hero_sword',    unlockArea: 7, category: 'セット装備' },
+  { id: 'hero_armor',    unlockArea: 7, category: 'セット装備' },
+  { id: 'legend_sword',  unlockArea: 7, category: 'セット装備' },
+  { id: 'legend_armor',  unlockArea: 7, category: 'セット装備' },
 ];
 
 const AREAS = [
@@ -271,24 +294,79 @@ const AREAS = [
   },
   {
     id: 3,
-    name: '暗黒城',
-    description: 'デーモンとダークエルフが守る魔の城。強敵が多数待ち受ける。',
-    minLevel: 23, maxLevel: 35,
-    enemies: [{ type: 'darkelf', weight: 30 }, { type: 'demon', weight: 40 }, { type: 'dragon', weight: 30 }],
-    enemyCount: [2, 3],
-    bgColor: '#0a0a1a',
-    unlockCondition: { wins: 30 },
-    bossType: 'demon',
+    name: '氷の洞窟',
+    description: '凍てつく地下洞窟。氷に強いモンスターが潜む。',
+    minLevel: 16, maxLevel: 20,
+    enemies: [{ type: 'slime', weight: 30 }, { type: 'zombie', weight: 35 }, { type: 'orc', weight: 35 }],
+    enemyCount: [1, 3],
+    bgColor: '#0a2a3a',
+    unlockCondition: { wins: 25 },
+    bossType: 'zombie',
   },
   {
     id: 4,
+    name: '海底・深海',
+    description: '光の届かない深海。素早い敵が多く出現する。',
+    minLevel: 21, maxLevel: 25,
+    enemies: [{ type: 'slime', weight: 25 }, { type: 'goblin', weight: 40 }, { type: 'darkelf', weight: 35 }],
+    enemyCount: [2, 3],
+    bgColor: '#0a1a3a',
+    unlockCondition: { wins: 35 },
+    bossType: 'goblin',
+  },
+  {
+    id: 5,
+    name: '空中城',
+    description: '雲の上に浮かぶ古代の城。飛行するモンスターが多い。',
+    minLevel: 26, maxLevel: 30,
+    enemies: [{ type: 'darkelf', weight: 45 }, { type: 'dragon', weight: 55 }],
+    enemyCount: [2, 3],
+    bgColor: '#1a2a4a',
+    unlockCondition: { wins: 45 },
+    bossType: 'dragon',
+  },
+  {
+    id: 6,
+    name: '暗黒城',
+    description: 'デーモンとダークエルフが守る魔の城。強敵が多数待ち受ける。',
+    minLevel: 31, maxLevel: 35,
+    enemies: [{ type: 'darkelf', weight: 30 }, { type: 'demon', weight: 40 }, { type: 'dragon', weight: 30 }],
+    enemyCount: [2, 3],
+    bgColor: '#0a0a1a',
+    unlockCondition: { wins: 55 },
+    bossType: 'demon',
+  },
+  {
+    id: 7,
     name: 'ドラゴンの巣',
     description: '最強のドラゴンとデーモンが棲む場所。ここを制した者が真の強者。',
-    minLevel: 36, maxLevel: 55,
+    minLevel: 36, maxLevel: 40,
     enemies: [{ type: 'dragon', weight: 50 }, { type: 'demon', weight: 50 }],
     enemyCount: [2, 3],
     bgColor: '#1a0000',
-    unlockCondition: { wins: 50 },
+    unlockCondition: { wins: 70 },
+    bossType: 'dragon',
+  },
+  {
+    id: 8,
+    name: '神々の試練場',
+    description: '神に選ばれし者だけが挑める究極の試練場。',
+    minLevel: 41, maxLevel: 45,
+    enemies: [{ type: 'dragon', weight: 50 }, { type: 'demon', weight: 50 }],
+    enemyCount: [2, 3],
+    bgColor: '#3a2a0a',
+    unlockCondition: { wins: 85 },
+    bossType: 'demon',
+  },
+  {
+    id: 9,
+    name: '世界の果て',
+    description: '全ての終わりと始まりの地。最強のモンスターが待ち受ける。',
+    minLevel: 46, maxLevel: 55,
+    enemies: [{ type: 'demon', weight: 45 }, { type: 'dragon', weight: 55 }],
+    enemyCount: [3, 3],
+    bgColor: '#0a0a0a',
+    unlockCondition: { wins: 100 },
     bossType: 'dragon',
   },
 ];
@@ -308,7 +386,7 @@ const ACHIEVEMENTS = [
   { id: 'max_evolve',     name: '最終進化',        desc: 'モンスターを最終進化させる（段階4）',    reward: 500 },
   { id: 'first_breed',    name: '遺伝子操作',      desc: '初めて繁殖させる',                      reward: 200 },
   { id: 'breed_10',       name: '血統管理者',      desc: '10回繁殖させる',                        reward: 500 },
-  { id: 'all_areas',      name: '探検家',          desc: '全5エリアを解放する',                   reward: 600 },
+  { id: 'all_areas',      name: '探検家',          desc: '全10エリアを解放する',                  reward: 600 },
   { id: 'all_monsters',   name: '図鑑完成',        desc: '全7種のモンスターを入手する',           reward: 1000 },
   { id: 'first_synthesis',name: '合成師',          desc: '初めて合成を行う',                      reward: 150 },
   { id: 'skill_master',   name: 'スキルマスター',  desc: '1体に12個以上のスキルを習得させる',     reward: 400 },
@@ -418,12 +496,25 @@ function calcEffectiveStats(monster) {
   if (eq.weapon && ITEMS[eq.weapon]) {
     const ef = ITEMS[eq.weapon].effect;
     if (ef.atk)         skillBonusAtk += ef.atk;
+    if (ef.spd)         skillBonusSpd += ef.spd;
     if (ef.special_dmg) specialDmg    += ef.special_dmg;
   }
   if (eq.armor && ITEMS[eq.armor]) {
     const ef = ITEMS[eq.armor].effect;
-    if (ef.def) skillBonusDef += ef.def;
-    if (ef.spd) skillBonusSpd += ef.spd;
+    if (ef.def)   skillBonusDef += ef.def;
+    if (ef.spd)   skillBonusSpd += ef.spd;
+    if (ef.maxHp) skillBonusHp  += ef.maxHp;
+  }
+
+  // Set bonuses
+  let catchRateBonus = 0;
+  for (const setId in SET_BONUSES) {
+    const setDef = SET_BONUSES[setId];
+    const hasAll = setDef.pieces.every(p => eq.weapon === p || eq.armor === p);
+    if (hasAll) {
+      if (setDef.bonus.maxHp)          skillBonusHp   += setDef.bonus.maxHp;
+      if (setDef.bonus.catchRateBonus) catchRateBonus += setDef.bonus.catchRateBonus;
+    }
   }
 
   // Trait bonuses (with trait level enhancement)
@@ -466,6 +557,7 @@ function calcEffectiveStats(monster) {
     extraTurn,
     firstStrike,
     firstEvade,
+    catchRateBonus,
     allTraits,
   };
 }
@@ -476,6 +568,7 @@ return {
   SKILL_TREE,
   ITEMS,
   SHOP_INVENTORY,
+  SET_BONUSES,
   AREAS,
   ACHIEVEMENTS,
   DAILY_QUEST_POOL,

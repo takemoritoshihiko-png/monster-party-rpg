@@ -1042,6 +1042,33 @@ body {
   color: #78909C;
   margin-top: 2px;
 }
+.shop-item-set {
+  font-size: 11px;
+  color: #FFB74D;
+  margin-top: 2px;
+}
+.equip-set-bonus {
+  font-size: 11px;
+  color: #666;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px dashed #444;
+  border-radius: 6px;
+  text-align: center;
+}
+.equip-set-bonus.active {
+  color: #FFB74D;
+  border-color: #FFB74D;
+  background: rgba(255,183,77,0.08);
+}
+.shop-category-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFD54F;
+  padding: 10px 4px 4px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 4px;
+}
 .shop-item-right {
   display: flex;
   flex-direction: column;

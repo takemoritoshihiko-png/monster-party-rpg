@@ -333,7 +333,9 @@ window.BattleEngine = (() => {
     } else {
       levelMod = Math.min(1.5, 1 + Math.abs(lvDiff) * 0.05); // +5% per level
     }
-    const rate = Math.min(0.95, baseRate * ballData.effect.catchRate * levelMod);
+    const playerStats = Game.getEffStats(player);
+    const setCatchBonus = playerStats.catchRateBonus || 0;
+    const rate = Math.min(0.95, baseRate * ballData.effect.catchRate * levelMod + setCatchBonus);
 
     addLog(`${ballData.name}を投げた！(成功率${Math.floor(rate * 100)}%)`);
 
@@ -341,7 +343,7 @@ window.BattleEngine = (() => {
       // Success!
       addLog(`やった！${target.nickname}を捕獲した！`);
       SFX.capture();
-      const captured = Game.createMonster(target.type, target.level);
+      const captured = Game.createMonster(target.type, target.level, { rarity: target.rarity });
       captured.battleHp = target.battleHp;
       captured.hp = target.battleHp;
 

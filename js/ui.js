@@ -5,8 +5,8 @@
 window.UI = (() => {
   const D = window.GAME_DATA;
 
-  const AREA_ICONS = ['🌲', '🏚', '⛰', '🏰', '🐉'];
-  const AREA_COLORS = ['#2E7D32', '#4E342E', '#37474F', '#311B92', '#B71C1C'];
+  const AREA_ICONS = ['🌲', '🏚', '⛰', '❄', '🌊', '☁', '🏰', '🐉', '⚡', '🌌'];
+  const AREA_COLORS = ['#2E7D32', '#4E342E', '#37474F', '#0D47A1', '#01579B', '#5C6BC0', '#311B92', '#B71C1C', '#F57F17', '#212121'];
 
   let toastTimer = null;
 
@@ -1134,6 +1134,16 @@ window.UI = (() => {
       html += `</div>`;
     }
 
+    // Set bonus display
+    const eq = mon.equipment;
+    for (const setId in D.SET_BONUSES) {
+      const setDef = D.SET_BONUSES[setId];
+      const hasAll = setDef.pieces.every(p => eq.weapon === p || eq.armor === p);
+      html += `<div class="equip-set-bonus${hasAll ? ' active' : ''}">`;
+      html += `${setDef.name}: ${setDef.desc}${hasAll ? ' ✓' : ''}`;
+      html += `</div>`;
+    }
+
     section.innerHTML = html;
 
     // Equip button events
@@ -1215,8 +1225,17 @@ window.UI = (() => {
     list.innerHTML = '';
 
     const maxUnlockedArea = Math.max(...state.unlockedAreas);
+    let currentCategory = null;
 
     D.SHOP_INVENTORY.forEach(entry => {
+      // Category header
+      if (entry.category && entry.category !== currentCategory) {
+        currentCategory = entry.category;
+        const header = document.createElement('div');
+        header.className = 'shop-category-header';
+        header.textContent = entry.category;
+        list.appendChild(header);
+      }
       const item = D.ITEMS[entry.id];
       if (!item) return;
       const locked = entry.unlockArea > maxUnlockedArea;
@@ -1235,9 +1254,15 @@ window.UI = (() => {
       const info = document.createElement('div');
       info.className = 'shop-item-info';
       const owned = Game.getItem(entry.id);
+      let setHtml = '';
+      if (item.set && D.SET_BONUSES[item.set]) {
+        const sb = D.SET_BONUSES[item.set];
+        setHtml = `<div class="shop-item-set">${sb.desc}</div>`;
+      }
       info.innerHTML = `
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-desc">${item.desc}</div>
+        ${setHtml}
         <div class="shop-item-owned">所持: ${owned}個</div>
       `;
 
