@@ -218,10 +218,10 @@ const ITEMS = {
   leather_armor:{ name: '革の鎧',        type: 'armor',      desc: 'DEF+5',                   effect: { def: 5 },            buyPrice: 200, sellPrice: 100 },
   iron_armor:   { name: '鉄の鎧',        type: 'armor',      desc: 'DEF+12',                  effect: { def: 12 },           buyPrice: 500, sellPrice: 250 },
   magic_robe:   { name: '魔法のローブ',  type: 'armor',      desc: 'DEF+6、SPD+5',            effect: { def: 6, spd: 5 },    buyPrice: 600, sellPrice: 300 },
-  hero_sword:   { name: '勇者の剣',    type: 'weapon',     desc: 'ATK+20',                  effect: { atk: 20 },           buyPrice: 800, sellPrice: 400, set: 'hero' },
-  hero_armor:   { name: '勇者の鎧',    type: 'armor',      desc: 'DEF+20',                  effect: { def: 20 },           buyPrice: 900, sellPrice: 450, set: 'hero' },
-  legend_sword: { name: '英雄の剣',    type: 'weapon',     desc: 'ATK+15、SPD+10',          effect: { atk: 15, spd: 10 },  buyPrice: 1100, sellPrice: 550, set: 'legend' },
-  legend_armor: { name: '英雄の鎧',    type: 'armor',      desc: 'DEF+15、HP+30',           effect: { def: 15, maxHp: 30 },buyPrice: 1200, sellPrice: 600, set: 'legend' },
+  hero_sword:   { name: '勇者の剣',    type: 'weapon',     desc: 'ATK+20',                  effect: { atk: 20 },           buyPrice: 2000, sellPrice: 1000, set: 'hero' },
+  hero_armor:   { name: '勇者の鎧',    type: 'armor',      desc: 'DEF+20',                  effect: { def: 20 },           buyPrice: 2200, sellPrice: 1100, set: 'hero' },
+  legend_sword: { name: '英雄の剣',    type: 'weapon',     desc: 'ATK+15、SPD+10',          effect: { atk: 15, spd: 10 },  buyPrice: 3200, sellPrice: 1600, set: 'legend' },
+  legend_armor: { name: '英雄の鎧',    type: 'armor',      desc: 'DEF+15、HP+30',           effect: { def: 15, maxHp: 30 },buyPrice: 3500, sellPrice: 1750, set: 'legend' },
 };
 
 const SET_BONUSES = {
