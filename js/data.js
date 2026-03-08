@@ -437,7 +437,7 @@ function getRarityInfo(star) {
 
 // Exp needed to reach next level
 function expToLevel(level) {
-  return Math.floor(38.5 * Math.pow(1.3, level - 1));
+  return Math.floor(19.25 * Math.pow(1.3, level - 1));
 }
 
 // Calculate monster effective stats considering level, stage, traits, skills, equipment
