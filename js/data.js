@@ -328,9 +328,9 @@ const AREAS = [
   {
     id: 6,
     name: '暗黒城',
-    description: 'デーモンとダークエルフが守る魔の城。強敵が多数待ち受ける。',
+    description: 'ダークエルフとドラゴンが守る魔の城。強敵が多数待ち受ける。',
     minLevel: 31, maxLevel: 35,
-    enemies: [{ type: 'darkelf', weight: 30 }, { type: 'demon', weight: 40 }, { type: 'dragon', weight: 30 }],
+    enemies: [{ type: 'darkelf', weight: 50 }, { type: 'dragon', weight: 50 }],
     enemyCount: [2, 3],
     bgColor: '#0a0a1a',
     unlockCondition: { wins: 55 },
