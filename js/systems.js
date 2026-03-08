@@ -182,11 +182,13 @@ window.Systems = (() => {
   // ---- Synthesis ----
   function canSynthesize(targetMon, fragmentType) {
     if (!targetMon || !fragmentType) return false;
+    if (targetMon.type === fragmentType) return false;
     const count = Game.getState().fragments[fragmentType] || 0;
     if (count < 3) return false;
     if ((targetMon.synthTraits || []).length >= 3) return false;
     const traitToAbsorb = D.MONSTER_TYPES[fragmentType]?.traits[0];
     if (!traitToAbsorb) return false;
+    if (targetMon.traits.includes(traitToAbsorb)) return false;
     if (targetMon.synthTraits.includes(traitToAbsorb)) return false;
     return true;
   }
