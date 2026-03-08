@@ -1937,6 +1937,43 @@ window.UI = (() => {
     // Enable/disable breed button
     const btn = document.getElementById('breed-start');
     btn.disabled = !(breedParent1 && breedParent2 && Systems.canBreed(breedParent1, breedParent2));
+
+    // Stat preview
+    renderBreedPreview();
+  }
+
+  function renderBreedPreview() {
+    let previewDiv = document.getElementById('breed-preview');
+    if (!previewDiv) {
+      previewDiv = document.createElement('div');
+      previewDiv.id = 'breed-preview';
+      previewDiv.className = 'breed-preview';
+      const btn = document.getElementById('breed-start');
+      btn.parentNode.insertBefore(previewDiv, btn);
+    }
+
+    if (!breedParent1 || !breedParent2 || !Systems.canBreed(breedParent1, breedParent2)) {
+      previewDiv.style.display = 'none';
+      return;
+    }
+
+    const preview = Systems.calcBreedPreview(breedParent1, breedParent2);
+    if (!preview) { previewDiv.style.display = 'none'; return; }
+
+    previewDiv.style.display = '';
+    let html = `<div class="breed-preview-title">予想ステータス <span style="color:#CE93D8">世代${preview.gen} (倍率×${preview.genMult})</span></div>`;
+
+    for (const p of preview.previews) {
+      html += `<div class="breed-preview-type">${p.name}の場合</div>`;
+      html += `<div class="breed-preview-stats">`;
+      html += `<div>HP: ${p.sMin.maxHp}〜${p.sMax.maxHp} <span class="bp-bonus">(+${p.minBonus.hp}〜${p.maxBonus.hp})</span></div>`;
+      html += `<div>ATK: ${p.sMin.atk}〜${p.sMax.atk} <span class="bp-bonus">(+${p.minBonus.atk}〜${p.maxBonus.atk})</span></div>`;
+      html += `<div>DEF: ${p.sMin.def}〜${p.sMax.def} <span class="bp-bonus">(+${p.minBonus.def}〜${p.maxBonus.def})</span></div>`;
+      html += `<div>SPD: ${p.sMin.spd}〜${p.sMax.spd} <span class="bp-bonus">(+${p.minBonus.spd}〜${p.maxBonus.spd})</span></div>`;
+      html += `</div>`;
+    }
+
+    previewDiv.innerHTML = html;
   }
 
   function renderBreedMonList() {

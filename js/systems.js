@@ -23,14 +23,18 @@ window.Systems = (() => {
     const childType = Math.random() < 0.5 ? mon1.type : mon2.type;
     const md = D.MONSTER_TYPES[childType];
 
-    // Stats: average of parents + random bonus
+    // Generation multiplier: deeper lineage = stronger offspring
+    const gen = Math.max(mon1.generation, mon2.generation);
+    const genMult = gen >= 3 ? 1.2 : gen >= 2 ? 1.15 : 1.1;
+
+    // Stats: average of parents * genMult + random bonus
     const s1 = Game.getEffStats(mon1);
     const s2 = Game.getEffStats(mon2);
     const statBonus = {
-      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.05 + Math.random() * 10),
-      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.05 + Math.random() * 3),
-      def: Math.floor((s1.def + s2.def) / 2 * 0.05 + Math.random() * 3),
-      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 + Math.random() * 3),
+      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.05 * genMult + Math.random() * 10),
+      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.05 * genMult + Math.random() * 3),
+      def: Math.floor((s1.def + s2.def) / 2 * 0.05 * genMult + Math.random() * 3),
+      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 * genMult + Math.random() * 3),
     };
 
     // Child rarity: based on parents' average
@@ -328,9 +332,42 @@ window.Systems = (() => {
     return true;
   }
 
+  function calcBreedPreview(mon1, mon2) {
+    if (!mon1 || !mon2) return null;
+    const s1 = Game.getEffStats(mon1);
+    const s2 = Game.getEffStats(mon2);
+    const gen = Math.max(mon1.generation, mon2.generation);
+    const genMult = gen >= 3 ? 1.2 : gen >= 2 ? 1.15 : 1.1;
+    // Min bonus (random=0)
+    const minBonus = {
+      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.05 * genMult),
+      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.05 * genMult),
+      def: Math.floor((s1.def + s2.def) / 2 * 0.05 * genMult),
+      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 * genMult),
+    };
+    // Max bonus (random=max)
+    const maxBonus = {
+      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.05 * genMult + 10),
+      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.05 * genMult + 3),
+      def: Math.floor((s1.def + s2.def) / 2 * 0.05 * genMult + 3),
+      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 * genMult + 3),
+    };
+    // Child base stats (Lv.1 of possible child types)
+    const types = [mon1.type, mon2.type];
+    const previews = types.map(t => {
+      const dummy = Game.createMonster(t, 1, { rarity: Math.round(((mon1.rarity||1)+(mon2.rarity||1))/2), statBonus: minBonus });
+      const sMin = Game.getEffStats(dummy);
+      const dummy2 = Game.createMonster(t, 1, { rarity: Math.round(((mon1.rarity||1)+(mon2.rarity||1))/2), statBonus: maxBonus });
+      const sMax = Game.getEffStats(dummy2);
+      return { type: t, name: D.MONSTER_TYPES[t].name, sMin, sMax, minBonus, maxBonus };
+    });
+    return { previews: [...new Map(previews.map(p => [p.type, p])).values()], genMult, gen: gen + 1 };
+  }
+
   return {
     canBreed,
     breed,
+    calcBreedPreview,
     retireParents,
     canSynthesize,
     synthesize,

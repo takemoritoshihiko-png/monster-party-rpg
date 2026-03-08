@@ -1715,6 +1715,38 @@ body {
   text-align: center;
   padding: 20px;
 }
+/* ---- Breed Preview ---- */
+.breed-preview {
+  background: rgba(171,71,188,0.08);
+  border: 1px solid #AB47BC;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 10px auto;
+  max-width: 360px;
+}
+.breed-preview-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #CE93D8;
+  margin-bottom: 6px;
+}
+.breed-preview-type {
+  font-size: 12px;
+  color: #90CAF9;
+  margin-top: 4px;
+  font-weight: bold;
+}
+.breed-preview-stats {
+  font-size: 12px;
+  color: #ddd;
+  line-height: 1.6;
+  padding-left: 8px;
+}
+.bp-bonus {
+  color: #66BB6A;
+  font-size: 11px;
+}
+
 .breed-result-title {
   font-size: 22px;
   font-weight: 900;
