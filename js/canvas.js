@@ -13,6 +13,8 @@ const SPRITE_MAP = {
   zombie: ['images/zombie_1.png', 'images/zombie_2.png', 'images/zombie_3.png', 'images/zombie_4.png'],
   orc: ['images/orc_1.png', 'images/orc_2.png', 'images/orc_3.png', 'images/orc_4.png'],
   darkelf: ['images/darkelf_1.png', 'images/darkelf_2.png', 'images/darkelf_3.png', 'images/darkelf_4.png'],
+  ancient_god: ['images/ancient_god.png', 'images/ancient_god.png', 'images/ancient_god.png', 'images/ancient_god.png'],
+  dragon_god: ['images/dragon_god.png', 'images/dragon_god.png', 'images/dragon_god.png', 'images/dragon_god.png'],
 };
 const spriteCache = {};
 

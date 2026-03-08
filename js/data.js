@@ -105,7 +105,7 @@ const MONSTER_TYPES = {
   dragon_god: {
     name: '龍神',
     stages: ['龍神の幼体', '龍神の顕現', '龍神', '天元龍神'],
-    baseStats: { hp: 200, atk: 35, def: 22, spd: 12 },
+    baseStats: { hp: 240, atk: 42, def: 26, spd: 14 },
     traits: ['omni_damage', 'quick_special'],
     evolveLevel: [0, 20, 40, 70],
     description: '全てを超越した最強の龍。倒した者にNG+の道が開かれる。',
@@ -450,11 +450,11 @@ const AREAS = [
     name: '神々の試練場',
     description: '神に選ばれし者だけが挑める究極の試練場。',
     minLevel: 41, maxLevel: 45,
-    enemies: [{ type: 'ancient_god', weight: 40 }, { type: 'dragon_god', weight: 30 }, { type: 'demon', weight: 20 }, { type: 'dragon', weight: 10 }],
+    enemies: [{ type: 'ancient_god', weight: 40 }, { type: 'demon', weight: 30 }, { type: 'dragon', weight: 20 }, { type: 'darkelf', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#3a2a0a',
     unlockCondition: { wins: 85 },
-    bossType: 'dragon_god',
+    bossType: 'ancient_god',
   },
   {
     id: 9,
