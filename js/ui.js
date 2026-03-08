@@ -630,10 +630,15 @@ window.UI = (() => {
       const rewards = BattleEngine.getBattleRewards();
       const levelUps = BattleEngine.applyRewards(rewards);
 
-      // Check if demon was defeated
+      // Check if demon or dragon god was defeated
       const defeatedDemon = bs.enemyParty.some(m => m.type === 'demon');
       if (defeatedDemon && !Game.getState().player.defeatDemon) {
         Game.getState().player.defeatDemon = true;
+        Game.autoSave();
+      }
+      const defeatedDragonGod = bs.enemyParty.some(m => m.type === 'dragon_god');
+      if (defeatedDragonGod && !Game.getState().player.defeatDragonGod) {
+        Game.getState().player.defeatDragonGod = true;
         Game.autoSave();
       }
 
@@ -652,6 +657,11 @@ window.UI = (() => {
         const fragNames = rewards.fragments.map(t => D.MONSTER_TYPES[t].name + 'の欠片');
         html += `<div class="reward-fragment">素材ドロップ: ${fragNames.join(', ')}</div>`;
       }
+      if (rewards.droppedEquip && rewards.droppedEquip.length > 0) {
+        const equipNames = rewards.droppedEquip.map(id => D.ITEMS[id].name);
+        html += `<div class="reward-fragment" style="color:#FFD54F;font-weight:bold;border:1px solid #FFD54F;padding:6px 8px;border-radius:6px;margin-top:4px;background:rgba(255,215,0,0.08)">` +
+          `✦ 伝説の装備ドロップ！ ${equipNames.join(', ')}</div>`;
+      }
       if (levelUps.length > 0) {
         html += `<div class="reward-lvup">レベルアップ！ ${levelUps.join(', ')}</div>`;
         SFX.levelUp();
@@ -669,10 +679,10 @@ window.UI = (() => {
         html += '</div>';
       }
 
-      // NG+ offer if demon defeated and not already in NG+
-      if (defeatedDemon && !Game.getState().ngPlus) {
+      // NG+ offer if dragon god defeated and not already in NG+
+      if (defeatedDragonGod && !Game.getState().ngPlus) {
         html += '<div style="margin-top:12px;padding:12px;background:rgba(255,215,0,0.08);border:1px solid #FFD54F;border-radius:8px">';
-        html += '<div style="color:#FFD54F;font-weight:bold;font-size:14px">魔王を倒した！</div>';
+        html += '<div style="color:#FFD54F;font-weight:bold;font-size:14px">龍神を倒した！</div>';
         html += '<div style="color:#ccc;font-size:12px;margin:6px 0">NG+モードが解放されました。敵が1.5倍強くなりますが、パーティとアイテムを引き継いで冒険できます。</div>';
         html += '<button class="btn warn" id="bt-ngplus" style="margin-top:6px;width:100%">NG+を開始する</button>';
         html += '</div>';
@@ -1745,7 +1755,7 @@ window.UI = (() => {
       win_10: '🏅', win_50: '🏅', win_100: '🏆', capture_10: '🎯', capture_30: '🎯',
       first_evolve: '✨', max_evolve: '🌟', first_breed: '🧬', breed_10: '🧬',
       all_areas: '🗺️', all_monsters: '📖', first_synthesis: '🔮', skill_master: '📚',
-      rich: '💰', defeat_demon: '👹', ng_plus: '🔁', generation_3: '👶',
+      rich: '💰', defeat_demon: '👹', defeat_dragon_god: '🐲', ng_plus: '🔁', generation_3: '👶',
       no_damage_win: '🛡️', level_30: '💪', level_50: '👑',
     };
 
@@ -1930,10 +1940,11 @@ window.UI = (() => {
 
     if (breedParent1) {
       slot1.className = 'breed-parent-slot filled';
+      const r1 = D.getRarityInfo(breedParent1.rarity || 1);
       slot1.innerHTML = `<div class="breed-slot-label">親1</div>
         <div class="breed-slot-canvas"></div>
         <div class="breed-slot-name">${breedParent1.nickname}</div>
-        <div class="breed-slot-info">Lv.${breedParent1.level}</div>`;
+        <div class="breed-slot-info">Lv.${breedParent1.level} <span style="color:${r1.color}">${r1.label}</span></div>`;
       const c = document.createElement('canvas');
       c.width = 64; c.height = 64;
       MonsterCanvas.drawMonster(c, breedParent1.type, breedParent1.stage, breedParent1.synthTraits || []);
@@ -1945,10 +1956,11 @@ window.UI = (() => {
 
     if (breedParent2) {
       slot2.className = 'breed-parent-slot filled';
+      const r2 = D.getRarityInfo(breedParent2.rarity || 1);
       slot2.innerHTML = `<div class="breed-slot-label">親2</div>
         <div class="breed-slot-canvas"></div>
         <div class="breed-slot-name">${breedParent2.nickname}</div>
-        <div class="breed-slot-info">Lv.${breedParent2.level}</div>`;
+        <div class="breed-slot-info">Lv.${breedParent2.level} <span style="color:${r2.color}">${r2.label}</span></div>`;
       const c = document.createElement('canvas');
       c.width = 64; c.height = 64;
       MonsterCanvas.drawMonster(c, breedParent2.type, breedParent2.stage, breedParent2.synthTraits || []);
@@ -2029,9 +2041,10 @@ window.UI = (() => {
 
       const div = document.createElement('div');
       div.className = 'breed-mon-card' + (isSelected ? ' selected' : '') + (disabled ? ' disabled' : '');
+      const ri = D.getRarityInfo(mon.rarity || 1);
       div.innerHTML = `<div class="bm-canvas"></div>
         <div class="bm-name">${mon.nickname}</div>
-        <div class="bm-info">Lv.${mon.level} ${md.name}</div>`;
+        <div class="bm-info">Lv.${mon.level} ${md.name} <span style="color:${ri.color}">${ri.label}</span></div>`;
       const c = document.createElement('canvas');
       c.width = 64; c.height = 64;
       MonsterCanvas.drawMonster(c, mon.type, mon.stage, mon.synthTraits || []);

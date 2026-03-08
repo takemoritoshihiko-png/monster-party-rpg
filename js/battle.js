@@ -47,7 +47,18 @@ window.BattleEngine = (() => {
       if (s.allTraits.includes('terror')) {
         addLog('恐怖の力が敵を包む！全ての敵のDEFが低下！');
         for (const em of battleState.enemyParty) {
-          em.atkDebuff = 0; // mark as affected
+          em.terrorDefReduction = 0.10;
+        }
+        break;
+      }
+    }
+    // Enemy terror: reduce all player DEF by 10%
+    for (const em of battleState.enemyParty) {
+      const s = Game.getEffStats(em);
+      if (s.allTraits.includes('terror')) {
+        addLog('敵の恐怖の力！味方のDEFが低下！');
+        for (const pm of battleState.playerParty) {
+          pm.terrorDefReduction = 0.10;
         }
         break;
       }
@@ -110,16 +121,9 @@ window.BattleEngine = (() => {
       atk = Math.floor(atk * (1 - attacker.atkDebuff));
     }
 
-    // Terror trait reduces enemy def
-    if (defStats.allTraits.includes('terror') === false) {
-      // Check if attacker has terror
-      for (const pm of battleState.playerParty) {
-        const ps = Game.getEffStats(pm);
-        if (ps.allTraits.includes('terror')) {
-          def = Math.floor(def * 0.9);
-          break;
-        }
-      }
+    // Terror trait: apply DEF reduction set at battle start
+    if (defender.terrorDefReduction > 0) {
+      def = Math.floor(def * (1 - defender.terrorDefReduction));
     }
 
     let damage = Math.max(1, atk - Math.floor(def * 0.5)) + Math.floor(Math.random() * 5) - 2;
@@ -128,15 +132,10 @@ window.BattleEngine = (() => {
       damage = Math.floor(damage * 1.8 * atkStats.specialDmg);
     }
 
-    // Guard
+    // Guard: base 65% reduction + guardBonus, capped at 85%
     if (defender.guarding) {
-      const guardReduction = 0.35 + (defStats.guardBonus || 0);
-      damage = Math.floor(damage * (1 - Math.min(0.85, guardReduction + 0.65)));
-      // Actually guard = 65% reduction base
-      damage = Math.floor(damage * 0.35);
-      if (defStats.guardBonus) {
-        damage = Math.floor(damage * (1 - defStats.guardBonus));
-      }
+      const guardReduction = Math.min(0.85, 0.65 + (defStats.guardBonus || 0));
+      damage = Math.floor(damage * (1 - guardReduction));
     }
 
     // Critical hit
@@ -153,6 +152,17 @@ window.BattleEngine = (() => {
 
   function applyDamage(target, damage, targetParty) {
     const stats = Game.getEffStats(target);
+
+    // Divine guard: reduce incoming damage by 20%
+    if (stats.allTraits.includes('divine_guard')) {
+      damage = Math.floor(damage * 0.8);
+      damage = Math.max(1, damage);
+    }
+
+    // Set bonus: damage reduction
+    if (stats.damageReduction > 0) {
+      damage = Math.max(1, Math.floor(damage * (1 - stats.damageReduction)));
+    }
 
     // Endure check
     if (target.battleHp - damage <= 0 && stats.endure && !target.endureUsed) {
@@ -335,7 +345,9 @@ window.BattleEngine = (() => {
     }
     const playerStats = Game.getEffStats(player);
     const setCatchBonus = playerStats.catchRateBonus || 0;
-    const rate = Math.min(0.95, baseRate * ballData.effect.catchRate * levelMod + setCatchBonus);
+    const md = D.MONSTER_TYPES[target.type];
+    const rateCap = md.captureRateCap || 0.95;
+    const rate = Math.min(rateCap, baseRate * ballData.effect.catchRate * levelMod + setCatchBonus);
 
     addLog(`${ballData.name}を投げた！(成功率${Math.floor(rate * 100)}%)`);
 
@@ -394,7 +406,14 @@ window.BattleEngine = (() => {
     const player = getCurrentPlayer();
     if (player) {
       player.turnCount++;
-      if (player.specialCooldown > 0) player.specialCooldown--;
+      if (player.specialCooldown > 0) {
+        player.specialCooldown--;
+        // Quick special trait or set bonus: additional cooldown reduction
+        const pStats = Game.getEffStats(player);
+        if ((pStats.allTraits.includes('quick_special') || pStats.setQuickSpecial) && player.specialCooldown > 0) {
+          player.specialCooldown--;
+        }
+      }
     }
 
     // Check if all enemies defeated
@@ -420,7 +439,7 @@ window.BattleEngine = (() => {
       enemyAction(enemy, i);
     }
 
-    // Regeneration trait for active player monster only (every 2 turns)
+    // Regeneration traits for active player monster
     const activePlayer = battleState.playerParty[battleState.currentPlayerIndex];
     if (activePlayer && activePlayer.battleHp > 0) {
       const s = Game.getEffStats(activePlayer);
@@ -428,6 +447,16 @@ window.BattleEngine = (() => {
         const heal = Math.max(1, Math.floor(s.maxHp * 0.05));
         activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
         addLog(`${activePlayer.nickname}の再生！HPが${heal}回復！`);
+      }
+      if (s.allTraits.includes('divine_regen')) {
+        const heal = Math.max(1, Math.floor(s.maxHp * 0.05));
+        activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
+        addLog(`${activePlayer.nickname}の神の再生！HPが${heal}回復！`);
+      }
+      if (s.setRegen > 0) {
+        const heal = Math.max(1, Math.floor(s.maxHp * s.setRegen));
+        activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
+        addLog(`${activePlayer.nickname}のセット効果でHPが${heal}回復！`);
       }
     }
 
@@ -551,7 +580,6 @@ window.BattleEngine = (() => {
     let totalExp = 0;
     let totalGold = 0;
     const fragments = [];
-    const pStats = Game.getEffStats(battleState.playerParty[0] || battleState.playerParty.find(p => true));
 
     for (const enemy of battleState.enemyParty) {
       const md = D.MONSTER_TYPES[enemy.type];
@@ -563,11 +591,6 @@ window.BattleEngine = (() => {
         fragments.push(enemy.type);
         Game.addFragment(enemy.type);
       }
-
-      // Demon defeat tracking
-      if (enemy.type === 'demon') {
-        Game.getState().player.defeatDemon = true;
-      }
     }
 
     // Gold bonus from scavenger trait
@@ -578,7 +601,24 @@ window.BattleEngine = (() => {
     }
     totalGold = Math.floor(totalGold * (1 + goldBonus));
 
-    return { totalExp, totalGold, fragments };
+    // Equipment drop from special enemies
+    const droppedEquip = [];
+    const EQUIP_DROPS = {
+      ancient_god: [{ item: 'ancgod_sword', chance: 0.02 }, { item: 'ancgod_armor', chance: 0.02 }],
+      dragon_god:  [{ item: 'drggod_sword', chance: 0.02 }, { item: 'drggod_armor', chance: 0.02 }],
+    };
+    for (const enemy of battleState.enemyParty) {
+      const drops = EQUIP_DROPS[enemy.type];
+      if (!drops) continue;
+      for (const d of drops) {
+        if (Math.random() < d.chance) {
+          Game.addItem(d.item, 1);
+          droppedEquip.push(d.item);
+        }
+      }
+    }
+
+    return { totalExp, totalGold, fragments, droppedEquip };
   }
 
   function applyRewards(rewards) {
@@ -594,18 +634,13 @@ window.BattleEngine = (() => {
       if (original) {
         if (mon.battleHp > 0) original.hp = mon.battleHp;
         const leveled = Game.addExp(original, rewards.totalExp);
-        if (leveled) levelUps.push(original.nickname);
-      }
-    }
-
-    // Update HP for alive but damaged monsters
-    for (const mon of battleState.playerParty) {
-      const original = Game.getState().party.find(m => m.id === mon.id);
-      if (original && mon.battleHp > 0) {
-        original.hp = mon.battleHp;
-      } else if (original && mon.battleHp <= 0) {
-        // Revive with 1 HP
-        original.hp = 1;
+        if (leveled) {
+          levelUps.push(original.nickname);
+          // Level up already sets HP to max in addExp, keep it
+        }
+        if (!leveled && mon.battleHp <= 0) {
+          original.hp = 1;
+        }
       }
     }
 
@@ -622,7 +657,7 @@ window.BattleEngine = (() => {
   }
 
   function applyLoss() {
-    // Lose half gold
+    // Lose 20% gold
     const lostGold = Math.floor(Game.getState().player.gold * 0.2);
     Game.getState().player.gold -= lostGold;
     Game.getState().player.losses++;

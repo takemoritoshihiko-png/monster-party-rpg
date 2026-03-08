@@ -26,6 +26,7 @@ window.Game = (() => {
         itemsUsed: 0,
         goldEarned: 0,
         defeatDemon: false,
+        defeatDragonGod: false,
       },
       party: [],
       box: [],
@@ -277,8 +278,16 @@ window.Game = (() => {
         if (!mon.equipment) mon.equipment = { weapon: null, armor: null };
         if (!mon.traitLevels) mon.traitLevels = {};
         if (!mon.rarity) mon.rarity = 1;
+        // Migrate old equipment IDs
+        const eq = mon.equipment;
+        if (eq.weapon && !D.ITEMS[eq.weapon]) eq.weapon = null;
+        if (eq.armor && !D.ITEMS[eq.armor]) eq.armor = null;
         // Auto-discover existing monsters
         state.dex[mon.type + '_' + mon.stage] = true;
+      }
+      // Migrate old equipment in inventory
+      for (const key of Object.keys(state.items || {})) {
+        if (!D.ITEMS[key] && state.items[key] > 0) delete state.items[key];
       }
       initDailyQuests();
       return true;
@@ -289,7 +298,7 @@ window.Game = (() => {
   function enableNGPlus() {
     state.ngPlus = true;
     state.ngPlusMultiplier = 1.5;
-    // Reset area progress but keep party/box
+    // Reset wins/losses but keep party/box/areas
     state.player.wins = 0;
     state.player.losses = 0;
     autoSave();

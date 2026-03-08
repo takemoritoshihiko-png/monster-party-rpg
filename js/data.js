@@ -89,6 +89,32 @@ const MONSTER_TYPES = {
     fragmentChance: 0.10,
     color: '#B71C1C',
   },
+  ancient_god: {
+    name: '古代神',
+    stages: ['古代神の欠片', '古代神の化身', '古代神', '創世神'],
+    baseStats: { hp: 180, atk: 28, def: 25, spd: 9 },
+    traits: ['divine_regen', 'divine_guard'],
+    evolveLevel: [0, 20, 40, 70],
+    description: '太古より存在する神。強大な回復力と防御力を持つ。',
+    expYield: 50,
+    goldYield: 30,
+    fragmentChance: 0.08,
+    color: '#FFD700',
+    captureRateCap: 0.05,
+  },
+  dragon_god: {
+    name: '龍神',
+    stages: ['龍神の幼体', '龍神の顕現', '龍神', '天元龍神'],
+    baseStats: { hp: 200, atk: 35, def: 22, spd: 12 },
+    traits: ['omni_damage', 'quick_special'],
+    evolveLevel: [0, 20, 40, 70],
+    description: '全てを超越した最強の龍。倒した者にNG+の道が開かれる。',
+    expYield: 60,
+    goldYield: 35,
+    fragmentChance: 0.06,
+    color: '#1565C0',
+    captureRateCap: 0.05,
+  },
 };
 
 const TRAITS = {
@@ -157,6 +183,26 @@ const TRAITS = {
     description: '戦闘開始時に敵全体のDEF-10%',
     icon: '👹',
   },
+  divine_regen: {
+    name: '神の再生',
+    description: '毎ターンHPの5%を回復する',
+    icon: '🌟',
+  },
+  divine_guard: {
+    name: '神の守護',
+    description: '被ダメージを20%軽減する',
+    icon: '🛡',
+  },
+  omni_damage: {
+    name: '全属性の力',
+    description: '全ての攻撃ダメージ+15%',
+    icon: '⚡',
+  },
+  quick_special: {
+    name: '迅速必殺',
+    description: '必殺技のクールダウン-1ターン',
+    icon: '💨',
+  },
 };
 
 // 3 routes x 12 skills each
@@ -212,50 +258,102 @@ const ITEMS = {
   ball_normal:  { name: '捕獲ボール',    type: 'ball',       desc: '捕獲率1.0倍',              effect: { catchRate: 1.0 },    buyPrice: 30,  sellPrice: 15  },
   ball_great:   { name: 'グレートボール', type: 'ball',      desc: '捕獲率1.5倍',              effect: { catchRate: 1.5 },    buyPrice: 80,  sellPrice: 40  },
   ball_ultra:   { name: 'ウルトラボール', type: 'ball',      desc: '捕獲率2.0倍',              effect: { catchRate: 2.0 },    buyPrice: 200, sellPrice: 100 },
-  iron_sword:   { name: '鉄の剣',        type: 'weapon',     desc: 'ATK+5',                   effect: { atk: 5 },            buyPrice: 200, sellPrice: 100 },
-  steel_sword:  { name: '鋼の剣',        type: 'weapon',     desc: 'ATK+12',                  effect: { atk: 12 },           buyPrice: 500, sellPrice: 250 },
-  magic_staff:  { name: '魔法の杖',      type: 'weapon',     desc: 'ATK+8、必殺技+15%',       effect: { atk: 8, special_dmg: 0.15 }, buyPrice: 600, sellPrice: 300 },
-  leather_armor:{ name: '革の鎧',        type: 'armor',      desc: 'DEF+5',                   effect: { def: 5 },            buyPrice: 200, sellPrice: 100 },
-  iron_armor:   { name: '鉄の鎧',        type: 'armor',      desc: 'DEF+12',                  effect: { def: 12 },           buyPrice: 500, sellPrice: 250 },
-  magic_robe:   { name: '魔法のローブ',  type: 'armor',      desc: 'DEF+6、SPD+5',            effect: { def: 6, spd: 5 },    buyPrice: 600, sellPrice: 300 },
-  hero_sword:   { name: '勇者の剣',    type: 'weapon',     desc: 'ATK+20',                  effect: { atk: 20 },           buyPrice: 2000, sellPrice: 1000, set: 'hero' },
-  hero_armor:   { name: '勇者の鎧',    type: 'armor',      desc: 'DEF+20',                  effect: { def: 20 },           buyPrice: 2200, sellPrice: 1100, set: 'hero' },
-  legend_sword: { name: '英雄の剣',    type: 'weapon',     desc: 'ATK+15、SPD+10',          effect: { atk: 15, spd: 10 },  buyPrice: 3200, sellPrice: 1600, set: 'legend' },
-  legend_armor: { name: '英雄の鎧',    type: 'armor',      desc: 'DEF+15、HP+30',           effect: { def: 15, maxHp: 30 },buyPrice: 3500, sellPrice: 1750, set: 'legend' },
+  // ① 冒険者セット
+  advent_sword:  { name: '冒険者の剣',   type: 'weapon', desc: 'ATK+5',                  effect: { atk: 5 },                     buyPrice: 200,  sellPrice: 100,  set: 'adventurer' },
+  advent_armor:  { name: '冒険者の鎧',   type: 'armor',  desc: 'DEF+5',                  effect: { def: 5 },                     buyPrice: 200,  sellPrice: 100,  set: 'adventurer' },
+  // ② 戦士セット
+  warrior_sword: { name: '戦士の剣',     type: 'weapon', desc: 'ATK+12',                 effect: { atk: 12 },                    buyPrice: 500,  sellPrice: 250,  set: 'warrior' },
+  warrior_armor: { name: '戦士の鎧',     type: 'armor',  desc: 'DEF+12',                 effect: { def: 12 },                    buyPrice: 500,  sellPrice: 250,  set: 'warrior' },
+  // ③ 魔法使いセット
+  magic_staff:   { name: '魔法の杖',     type: 'weapon', desc: 'ATK+14、必殺技+15%',     effect: { atk: 14, special_dmg: 0.15 }, buyPrice: 1000, sellPrice: 500,  set: 'mage' },
+  magic_robe:    { name: '魔法のローブ',  type: 'armor',  desc: 'DEF+8、SPD+8',           effect: { def: 8, spd: 8 },             buyPrice: 1000, sellPrice: 500,  set: 'mage' },
+  // ④ 騎士セット
+  knight_sword:  { name: '騎士の剣',     type: 'weapon', desc: 'ATK+20、SPD+5',          effect: { atk: 20, spd: 5 },            buyPrice: 2000, sellPrice: 1000, set: 'knight' },
+  knight_armor:  { name: '騎士の鎧',     type: 'armor',  desc: 'DEF+20、HP+30',          effect: { def: 20, maxHp: 30 },         buyPrice: 2000, sellPrice: 1000, set: 'knight' },
+  // ⑤ 勇者セット
+  hero_sword:    { name: '勇者の剣',     type: 'weapon', desc: 'ATK+28、SPD+8',          effect: { atk: 28, spd: 8 },            buyPrice: 3000, sellPrice: 1500, set: 'hero' },
+  hero_armor:    { name: '勇者の鎧',     type: 'armor',  desc: 'DEF+28、HP+50',          effect: { def: 28, maxHp: 50 },         buyPrice: 3000, sellPrice: 1500, set: 'hero' },
+  // ⑥ 英雄セット
+  legend_sword:  { name: '英雄の剣',     type: 'weapon', desc: 'ATK+35、SPD+15',         effect: { atk: 35, spd: 15 },           buyPrice: 5000, sellPrice: 2500, set: 'legend' },
+  legend_armor:  { name: '英雄の鎧',     type: 'armor',  desc: 'DEF+35、HP+80',          effect: { def: 35, maxHp: 80 },         buyPrice: 5000, sellPrice: 2500, set: 'legend' },
+  // ⑦ 古代神セット（ドロップ限定）
+  ancgod_sword:  { name: '古代神の剣',   type: 'weapon', desc: 'ATK+45、必殺技+25%',     effect: { atk: 45, special_dmg: 0.25 }, buyPrice: 0,    sellPrice: 5000, set: 'ancient_god' },
+  ancgod_armor:  { name: '古代神の鎧',   type: 'armor',  desc: 'DEF+45、HP+100',         effect: { def: 45, maxHp: 100 },        buyPrice: 0,    sellPrice: 5000, set: 'ancient_god' },
+  // ⑧ 龍神セット（ドロップ限定）
+  drggod_sword:  { name: '龍神の剣',     type: 'weapon', desc: 'ATK+45、SPD+15',         effect: { atk: 45, spd: 15 },           buyPrice: 0,    sellPrice: 8000, set: 'dragon_god' },
+  drggod_armor:  { name: '龍神の鎧',     type: 'armor',  desc: 'DEF+45、HP+100',         effect: { def: 45, maxHp: 100 },        buyPrice: 0,    sellPrice: 8000, set: 'dragon_god' },
 };
 
 const SET_BONUSES = {
-  hero: {
+  adventurer: {
+    name: '冒険者セット',
+    pieces: ['advent_sword', 'advent_armor'],
+    bonus: { maxHp: 20 },
+    desc: 'セット効果: HP+20',
+  },
+  warrior: {
     name: '戦士セット',
+    pieces: ['warrior_sword', 'warrior_armor'],
+    bonus: { atk: 5 },
+    desc: 'セット効果: ATK+5',
+  },
+  mage: {
+    name: '魔法使いセット',
+    pieces: ['magic_staff', 'magic_robe'],
+    bonus: { quickSpecial: true },
+    desc: 'セット効果: 必殺技クールダウン-1',
+  },
+  knight: {
+    name: '騎士セット',
+    pieces: ['knight_sword', 'knight_armor'],
+    bonus: { damageReduction: 0.10 },
+    desc: 'セット効果: 被ダメージ10%軽減',
+  },
+  hero: {
+    name: '勇者セット',
     pieces: ['hero_sword', 'hero_armor'],
-    bonus: { maxHp: 50 },
-    desc: 'セット効果: HP+50',
+    bonus: { maxHp: 80 },
+    desc: 'セット効果: HP+80',
   },
   legend: {
     name: '英雄セット',
     pieces: ['legend_sword', 'legend_armor'],
-    bonus: { catchRateBonus: 0.10 },
-    desc: 'セット効果: 捕獲成功率+10%',
+    bonus: { catchRateBonus: 0.15, allStatMult: 0.10 },
+    desc: 'セット効果: 捕獲率+15%・全ステ+10%',
+  },
+  ancient_god: {
+    name: '古代神セット',
+    pieces: ['ancgod_sword', 'ancgod_armor'],
+    bonus: { setRegen: 0.03 },
+    desc: 'セット効果: 毎ターンHP3%回復',
+  },
+  dragon_god: {
+    name: '龍神セット',
+    pieces: ['drggod_sword', 'drggod_armor'],
+    bonus: { allStatMult: 0.20 },
+    desc: 'セット効果: 全ステータス+20%',
   },
 };
 
 const SHOP_INVENTORY = [
   { id: 'potion',        unlockArea: 0 },
   { id: 'ball_normal',   unlockArea: 0 },
+  { id: 'advent_sword',  unlockArea: 0, category: 'セット装備' },
+  { id: 'advent_armor',  unlockArea: 0, category: 'セット装備' },
   { id: 'hi_potion',     unlockArea: 1 },
   { id: 'ball_great',    unlockArea: 1 },
-  { id: 'iron_sword',    unlockArea: 1 },
-  { id: 'leather_armor', unlockArea: 1 },
+  { id: 'warrior_sword', unlockArea: 2, category: 'セット装備' },
+  { id: 'warrior_armor', unlockArea: 2, category: 'セット装備' },
   { id: 'ball_ultra',    unlockArea: 2 },
-  { id: 'steel_sword',   unlockArea: 2 },
-  { id: 'iron_armor',    unlockArea: 2 },
-  { id: 'magic_staff',   unlockArea: 6 },
-  { id: 'magic_robe',    unlockArea: 6 },
+  { id: 'magic_staff',   unlockArea: 3, category: 'セット装備' },
+  { id: 'magic_robe',    unlockArea: 3, category: 'セット装備' },
+  { id: 'knight_sword',  unlockArea: 5, category: 'セット装備' },
+  { id: 'knight_armor',  unlockArea: 5, category: 'セット装備' },
+  { id: 'hero_sword',    unlockArea: 6, category: 'セット装備' },
+  { id: 'hero_armor',    unlockArea: 6, category: 'セット装備' },
   { id: 'elixir',        unlockArea: 7 },
-  { id: 'hero_sword',    unlockArea: 7, category: 'セット装備' },
-  { id: 'hero_armor',    unlockArea: 7, category: 'セット装備' },
-  { id: 'legend_sword',  unlockArea: 7, category: 'セット装備' },
-  { id: 'legend_armor',  unlockArea: 7, category: 'セット装備' },
+  { id: 'legend_sword',  unlockArea: 8, category: 'セット装備' },
+  { id: 'legend_armor',  unlockArea: 8, category: 'セット装備' },
 ];
 
 const AREAS = [
@@ -275,7 +373,7 @@ const AREAS = [
     name: '暗い沼地',
     description: 'ゾンビとオークが徘徊する危険な沼地。',
     minLevel: 6, maxLevel: 12,
-    enemies: [{ type: 'zombie', weight: 40 }, { type: 'goblin', weight: 30 }, { type: 'orc', weight: 30 }],
+    enemies: [{ type: 'zombie', weight: 40 }, { type: 'goblin', weight: 30 }, { type: 'slime', weight: 20 }, { type: 'orc', weight: 10 }],
     enemyCount: [1, 2],
     bgColor: '#1a2a0a',
     unlockCondition: { wins: 5 },
@@ -286,7 +384,7 @@ const AREAS = [
     name: '霧の山脈',
     description: 'オークとダークエルフが支配する険しい山岳地帯。',
     minLevel: 13, maxLevel: 22,
-    enemies: [{ type: 'orc', weight: 35 }, { type: 'darkelf', weight: 45 }, { type: 'zombie', weight: 20 }],
+    enemies: [{ type: 'orc', weight: 40 }, { type: 'zombie', weight: 30 }, { type: 'goblin', weight: 20 }, { type: 'darkelf', weight: 10 }],
     enemyCount: [1, 3],
     bgColor: '#0a0a2a',
     unlockCondition: { wins: 15 },
@@ -296,8 +394,8 @@ const AREAS = [
     id: 3,
     name: '氷の洞窟',
     description: '凍てつく地下洞窟。氷に強いモンスターが潜む。',
-    minLevel: 16, maxLevel: 20,
-    enemies: [{ type: 'slime', weight: 30 }, { type: 'zombie', weight: 35 }, { type: 'orc', weight: 35 }],
+    minLevel: 20, maxLevel: 26,
+    enemies: [{ type: 'zombie', weight: 40 }, { type: 'orc', weight: 30 }, { type: 'darkelf', weight: 20 }, { type: 'slime', weight: 10 }],
     enemyCount: [1, 3],
     bgColor: '#0a2a3a',
     unlockCondition: { wins: 25 },
@@ -308,7 +406,7 @@ const AREAS = [
     name: '海底・深海',
     description: '光の届かない深海。素早い敵が多く出現する。',
     minLevel: 21, maxLevel: 25,
-    enemies: [{ type: 'slime', weight: 25 }, { type: 'goblin', weight: 40 }, { type: 'darkelf', weight: 35 }],
+    enemies: [{ type: 'darkelf', weight: 40 }, { type: 'goblin', weight: 30 }, { type: 'orc', weight: 20 }, { type: 'zombie', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#0a1a3a',
     unlockCondition: { wins: 35 },
@@ -319,7 +417,7 @@ const AREAS = [
     name: '空中城',
     description: '雲の上に浮かぶ古代の城。飛行するモンスターが多い。',
     minLevel: 26, maxLevel: 30,
-    enemies: [{ type: 'darkelf', weight: 45 }, { type: 'dragon', weight: 55 }],
+    enemies: [{ type: 'dragon', weight: 40 }, { type: 'darkelf', weight: 30 }, { type: 'orc', weight: 20 }, { type: 'goblin', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#1a2a4a',
     unlockCondition: { wins: 45 },
@@ -330,7 +428,7 @@ const AREAS = [
     name: '暗黒城',
     description: 'ダークエルフとドラゴンが守る魔の城。強敵が多数待ち受ける。',
     minLevel: 31, maxLevel: 35,
-    enemies: [{ type: 'darkelf', weight: 50 }, { type: 'dragon', weight: 50 }],
+    enemies: [{ type: 'demon', weight: 40 }, { type: 'dragon', weight: 30 }, { type: 'darkelf', weight: 20 }, { type: 'orc', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#0a0a1a',
     unlockCondition: { wins: 55 },
@@ -341,7 +439,7 @@ const AREAS = [
     name: 'ドラゴンの巣',
     description: '最強のドラゴンとデーモンが棲む場所。ここを制した者が真の強者。',
     minLevel: 36, maxLevel: 40,
-    enemies: [{ type: 'dragon', weight: 50 }, { type: 'demon', weight: 50 }],
+    enemies: [{ type: 'dragon', weight: 40 }, { type: 'demon', weight: 30 }, { type: 'ancient_god', weight: 20 }, { type: 'darkelf', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#1a0000',
     unlockCondition: { wins: 70 },
@@ -352,22 +450,22 @@ const AREAS = [
     name: '神々の試練場',
     description: '神に選ばれし者だけが挑める究極の試練場。',
     minLevel: 41, maxLevel: 45,
-    enemies: [{ type: 'dragon', weight: 50 }, { type: 'demon', weight: 50 }],
+    enemies: [{ type: 'ancient_god', weight: 40 }, { type: 'dragon_god', weight: 30 }, { type: 'demon', weight: 20 }, { type: 'dragon', weight: 10 }],
     enemyCount: [2, 3],
     bgColor: '#3a2a0a',
     unlockCondition: { wins: 85 },
-    bossType: 'demon',
+    bossType: 'dragon_god',
   },
   {
     id: 9,
     name: '世界の果て',
     description: '全ての終わりと始まりの地。最強のモンスターが待ち受ける。',
     minLevel: 46, maxLevel: 55,
-    enemies: [{ type: 'demon', weight: 45 }, { type: 'dragon', weight: 55 }],
+    enemies: [{ type: 'dragon_god', weight: 40 }, { type: 'ancient_god', weight: 30 }, { type: 'demon', weight: 20 }, { type: 'dragon', weight: 10 }],
     enemyCount: [3, 3],
     bgColor: '#0a0a0a',
     unlockCondition: { wins: 100 },
-    bossType: 'dragon',
+    bossType: 'dragon_god',
   },
 ];
 
@@ -387,11 +485,12 @@ const ACHIEVEMENTS = [
   { id: 'first_breed',    name: '遺伝子操作',      desc: '初めて繁殖させる',                      reward: 200 },
   { id: 'breed_10',       name: '血統管理者',      desc: '10回繁殖させる',                        reward: 500 },
   { id: 'all_areas',      name: '探検家',          desc: '全10エリアを解放する',                  reward: 600 },
-  { id: 'all_monsters',   name: '図鑑完成',        desc: '全7種のモンスターを入手する',           reward: 1000 },
+  { id: 'all_monsters',   name: '図鑑完成',        desc: '全9種のモンスターを入手する',           reward: 1000 },
   { id: 'first_synthesis',name: '合成師',          desc: '初めて合成を行う',                      reward: 150 },
   { id: 'skill_master',   name: 'スキルマスター',  desc: '1体に12個以上のスキルを習得させる',     reward: 400 },
   { id: 'rich',           name: '大富豪',          desc: '所持金を10000ゴールド以上にする',       reward: 0   },
   { id: 'defeat_demon',   name: '魔王討伐',        desc: 'デーモンを倒す',                        reward: 800 },
+  { id: 'defeat_dragon_god', name: '龍神討伐',     desc: '龍神を倒す',                            reward: 1500 },
   { id: 'ng_plus',        name: '強くてニューゲーム', desc: 'NG+を解放する',                     reward: 0   },
   { id: 'generation_3',   name: '3世代目',         desc: '3世代目のモンスターを育てる',           reward: 300 },
   { id: 'no_damage_win',  name: '完璧な勝利',      desc: 'HP満タンのまま勝利する',                reward: 200 },
@@ -464,7 +563,7 @@ function calcStatBreakdown(monster) {
 
 // Exp needed to reach next level
 function expToLevel(level) {
-  return Math.floor(19.25 * Math.pow(1.3, level - 1));
+  return Math.floor(19.25 * Math.pow(1.15, level - 1));
 }
 
 // Calculate monster effective stats considering level, stage, traits, skills, equipment
@@ -535,12 +634,21 @@ function calcEffectiveStats(monster) {
 
   // Set bonuses
   let catchRateBonus = 0;
+  let damageReduction = 0;
+  let setQuickSpecial = false;
+  let allStatMult = 0;
+  let setRegen = 0;
   for (const setId in SET_BONUSES) {
     const setDef = SET_BONUSES[setId];
     const hasAll = setDef.pieces.every(p => eq.weapon === p || eq.armor === p);
     if (hasAll) {
-      if (setDef.bonus.maxHp)          skillBonusHp   += setDef.bonus.maxHp;
-      if (setDef.bonus.catchRateBonus) catchRateBonus += setDef.bonus.catchRateBonus;
+      if (setDef.bonus.maxHp)           skillBonusHp    += setDef.bonus.maxHp;
+      if (setDef.bonus.atk)             skillBonusAtk   += setDef.bonus.atk;
+      if (setDef.bonus.catchRateBonus)  catchRateBonus  += setDef.bonus.catchRateBonus;
+      if (setDef.bonus.damageReduction) damageReduction += setDef.bonus.damageReduction;
+      if (setDef.bonus.quickSpecial)    setQuickSpecial  = true;
+      if (setDef.bonus.allStatMult)     allStatMult     += setDef.bonus.allStatMult;
+      if (setDef.bonus.setRegen)        setRegen        += setDef.bonus.setRegen;
     }
   }
 
@@ -562,12 +670,21 @@ function calcEffectiveStats(monster) {
     if (trait === 'scavenger')      goldBonus    += 0.30 * mult;
     if (trait === 'cunning')        evadeBonus   += 0.10 * mult;
     if (trait === 'berserk')        lowHpAtk     += 0.30 * mult;
+    if (trait === 'omni_damage')    traitAtkMult += 0.15 * mult;
   }
 
-  const maxHp  = Math.floor(baseHp  * traitHpMult)  + skillBonusHp;
-  const atk    = Math.floor(baseAtk * traitAtkMult)  + skillBonusAtk;
-  const def    = baseDef + skillBonusDef;
-  const spd    = Math.floor(baseSpd * traitSpdMult)  + skillBonusSpd;
+  let maxHp  = Math.floor(baseHp  * traitHpMult)  + skillBonusHp;
+  let atk    = Math.floor(baseAtk * traitAtkMult)  + skillBonusAtk;
+  let def    = baseDef + skillBonusDef;
+  let spd    = Math.floor(baseSpd * traitSpdMult)  + skillBonusSpd;
+
+  // allStatMult from set bonuses (applied after all other calculations)
+  if (allStatMult > 0) {
+    maxHp = Math.floor(maxHp * (1 + allStatMult));
+    atk   = Math.floor(atk   * (1 + allStatMult));
+    def   = Math.floor(def   * (1 + allStatMult));
+    spd   = Math.floor(spd   * (1 + allStatMult));
+  }
 
   return {
     maxHp, atk, def, spd,
@@ -585,6 +702,9 @@ function calcEffectiveStats(monster) {
     firstStrike,
     firstEvade,
     catchRateBonus,
+    damageReduction,
+    setQuickSpecial,
+    setRegen,
     allTraits,
   };
 }

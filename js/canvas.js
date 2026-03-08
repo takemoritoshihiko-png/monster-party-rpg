@@ -74,8 +74,10 @@ function drawMonster(canvas, monsterType, stage, synthTraits = [], options = {})
     case 'orc':      drawOrc(ctx, cx, cy, stage, scale, synthTraits); break;
     case 'darkelf':  drawDarkElf(ctx, cx, cy, stage, scale, synthTraits); break;
     case 'dragon':   drawDragon(ctx, cx, cy, stage, scale, synthTraits); break;
-    case 'demon':    drawDemon(ctx, cx, cy, stage, scale, synthTraits); break;
-    default:         drawZombie(ctx, cx, cy, stage, scale, synthTraits);
+    case 'demon':       drawDemon(ctx, cx, cy, stage, scale, synthTraits); break;
+    case 'ancient_god': drawAncientGod(ctx, cx, cy, stage, scale, synthTraits); break;
+    case 'dragon_god':  drawDragonGod(ctx, cx, cy, stage, scale, synthTraits); break;
+    default:            drawZombie(ctx, cx, cy, stage, scale, synthTraits);
   }
 
   drawSynthOverlays(ctx, cx, cy, scale, synthTraits);
@@ -91,6 +93,12 @@ function drawSynthOverlays(ctx, cx, cy, scale, synthTraits) {
   }
   if (synthTraits.includes('flying')) {
     drawWingOverlay(ctx, cx, cy, scale);
+  }
+  if (synthTraits.includes('divine_regen') || synthTraits.includes('divine_guard')) {
+    drawDivineGlow(ctx, cx, cy, scale);
+  }
+  if (synthTraits.includes('omni_damage') || synthTraits.includes('quick_special')) {
+    drawCosmicAura(ctx, cx, cy, scale);
   }
 }
 
@@ -878,6 +886,278 @@ function drawDemon(ctx, cx, cy, stage, scale, synth) {
   }
 }
 
+// ---- ANCIENT GOD ----
+function drawAncientGod(ctx, cx, cy, stage, scale, synth) {
+  const stageColors = [['#FFD700','#B8860B'], ['#FFC107','#FF8F00'], ['#FFD54F','#F57F17'], ['#FFFFFF','#FFD700']];
+  const [color, darkColor] = stageColors[stage] || stageColors[0];
+  const bodyH = (55 + stage * 9) * scale;
+  const bodyW = (26 + stage * 5) * scale;
+  const headR = (16 + stage * 3) * scale;
+
+  // Divine glow aura
+  const glowR = (60 + stage * 10) * scale;
+  const glow = ctx.createRadialGradient(cx, cy, 10 * scale, cx, cy, glowR);
+  glow.addColorStop(0, 'rgba(255,215,0,0.15)');
+  glow.addColorStop(0.5, 'rgba(255,215,0,0.08)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(255,215,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + bodyH / 2 + 5 * scale, bodyW * 0.9, 8 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Flowing robe
+  ctx.fillStyle = darkColor;
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyW * 0.6, cy + bodyH * 0.05);
+  ctx.lineTo(cx - bodyW * 1.0, cy + bodyH * 0.7);
+  ctx.lineTo(cx + bodyW * 1.0, cy + bodyH * 0.7);
+  ctx.lineTo(cx + bodyW * 0.6, cy + bodyH * 0.05);
+  ctx.closePath();
+  ctx.fill();
+
+  // Body
+  const bodyGrad = ctx.createLinearGradient(cx, cy - bodyH / 2, cx, cy + bodyH * 0.1);
+  bodyGrad.addColorStop(0, lighten(color, 30));
+  bodyGrad.addColorStop(1, darkColor);
+  ctx.fillStyle = bodyGrad;
+  roundRect(ctx, cx - bodyW / 2, cy - bodyH / 2, bodyW, bodyH * 0.65, 6 * scale);
+  ctx.fill();
+
+  // Arms (open, divine gesture)
+  ctx.fillStyle = color;
+  ctx.save();
+  ctx.translate(cx - bodyW * 0.5, cy - bodyH * 0.1);
+  ctx.rotate(-0.5);
+  ctx.fillRect(0, 0, -bodyW * 0.6, bodyW * 0.2);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(cx + bodyW * 0.5, cy - bodyH * 0.1);
+  ctx.rotate(0.5);
+  ctx.fillRect(0, 0, bodyW * 0.6, bodyW * 0.2);
+  ctx.restore();
+
+  // Orbs in hands
+  ctx.fillStyle = 'rgba(255,255,200,0.7)';
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 10 * scale;
+  ctx.beginPath();
+  ctx.arc(cx - bodyW * 1.0, cy - bodyH * 0.35, 6 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + bodyW * 1.0, cy - bodyH * 0.35, 6 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Head
+  const headGrad = ctx.createRadialGradient(cx, cy - bodyH / 2 - headR * 0.3, headR * 0.1, cx, cy - bodyH / 2, headR);
+  headGrad.addColorStop(0, '#FFFFFF');
+  headGrad.addColorStop(1, color);
+  ctx.fillStyle = headGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy - bodyH / 2, headR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Divine eyes (golden glow)
+  ctx.fillStyle = '#FFD700';
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 6 * scale;
+  ctx.beginPath();
+  ctx.ellipse(cx - headR * 0.3, cy - bodyH / 2 - headR * 0.1, headR * 0.18, headR * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + headR * 0.3, cy - bodyH / 2 - headR * 0.1, headR * 0.18, headR * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Halo (always present, larger with stage)
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = (2 + stage) * scale;
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = 12 * scale;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - bodyH / 2 - headR * 1.1, (20 + stage * 4) * scale, (7 + stage) * scale, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Divine symbol on chest
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = `${(14 + stage * 2) * scale}px serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('✦', cx, cy - bodyH * 0.1);
+
+  if (stage >= 2) drawCrown(ctx, cx, cy - bodyH / 2 - headR, scale * (0.8 + stage * 0.15), '#FFD700');
+}
+
+// ---- DRAGON GOD ----
+function drawDragonGod(ctx, cx, cy, stage, scale, synth) {
+  const stageColors = [['#1565C0','#0D47A1'], ['#0D47A1','#1A237E'], ['#1A237E','#0D0D5E'], ['#7C4DFF','#311B92']];
+  const [color, darkColor] = stageColors[stage] || stageColors[0];
+  const bodyW = (48 + stage * 12) * scale;
+  const bodyH = (32 + stage * 8) * scale;
+  const headR = (16 + stage * 3) * scale;
+
+  // Cosmic aura
+  const auraR = (65 + stage * 10) * scale;
+  const aura = ctx.createRadialGradient(cx, cy, 10 * scale, cx, cy, auraR);
+  aura.addColorStop(0, 'rgba(100,100,255,0.1)');
+  aura.addColorStop(0.6, 'rgba(60,0,120,0.08)');
+  aura.addColorStop(1, 'transparent');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,80,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + bodyH * 0.7, bodyW * 0.75, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail (longer, more majestic)
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 12 * scale;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + bodyW * 0.5, cy);
+  ctx.bezierCurveTo(cx + bodyW * 1.0, cy + bodyH * 0.1, cx + bodyW * 1.3, cy - bodyH * 0.4, cx + bodyW * 0.95, cy - bodyH * 0.8);
+  ctx.stroke();
+
+  // Wings (massive, ethereal)
+  const wingAlpha = stage >= 3 ? 0.8 : 0.6;
+  ctx.fillStyle = `rgba(100,80,200,${wingAlpha})`;
+  // Left wing
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyW * 0.3, cy - bodyH * 0.1);
+  ctx.bezierCurveTo(cx - bodyW * 1.0, cy - bodyH * 1.8, cx - bodyW * 1.5, cy - bodyH * 0.9, cx - bodyW * 0.9, cy + bodyH * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  // Right wing
+  ctx.beginPath();
+  ctx.moveTo(cx + bodyW * 0.3, cy - bodyH * 0.1);
+  ctx.bezierCurveTo(cx + bodyW * 1.0, cy - bodyH * 1.8, cx + bodyW * 1.5, cy - bodyH * 0.9, cx + bodyW * 0.9, cy + bodyH * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wing inner pattern
+  ctx.strokeStyle = 'rgba(150,120,255,0.4)';
+  ctx.lineWidth = 1.5 * scale;
+  for (let i = 1; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW * 0.3, cy - bodyH * 0.1);
+    ctx.bezierCurveTo(cx - bodyW * (0.6 + i * 0.25), cy - bodyH * (1.0 + i * 0.15), cx - bodyW * (1.0 + i * 0.15), cy - bodyH * 0.5, cx - bodyW * (0.6 + i * 0.1), cy + bodyH * 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + bodyW * 0.3, cy - bodyH * 0.1);
+    ctx.bezierCurveTo(cx + bodyW * (0.6 + i * 0.25), cy - bodyH * (1.0 + i * 0.15), cx + bodyW * (1.0 + i * 0.15), cy - bodyH * 0.5, cx + bodyW * (0.6 + i * 0.1), cy + bodyH * 0.2);
+    ctx.stroke();
+  }
+
+  // Body
+  const bodyGrad = ctx.createRadialGradient(cx - bodyW * 0.2, cy - bodyH * 0.2, bodyW * 0.1, cx, cy, bodyW);
+  bodyGrad.addColorStop(0, lighten(color, 30));
+  bodyGrad.addColorStop(0.5, color);
+  bodyGrad.addColorStop(1, darkColor);
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, bodyW * 0.5, bodyH * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Belly (luminous)
+  ctx.fillStyle = 'rgba(180,200,255,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + bodyH * 0.1, bodyW * 0.3, bodyH * 0.38, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = darkColor;
+  ctx.fillRect(cx - bodyW * 0.4, cy + bodyH * 0.3, bodyW * 0.18, bodyH * 0.55);
+  ctx.fillRect(cx + bodyW * 0.22, cy + bodyH * 0.3, bodyW * 0.18, bodyH * 0.55);
+  // Claws
+  ctx.fillStyle = '#7C4DFF';
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.ellipse(cx - bodyW * 0.38 + i * 5 * scale, cy + bodyH * 0.85, 3 * scale, 5 * scale, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + bodyW * 0.24 + i * 5 * scale, cy + bodyH * 0.85, 3 * scale, 5 * scale, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Neck and head
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 14 * scale;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - bodyW * 0.2, cy - bodyH * 0.4);
+  ctx.bezierCurveTo(cx - bodyW * 0.4, cy - bodyH * 0.9, cx - bodyW * 0.5, cy - bodyH * 1.0, cx - bodyW * 0.45, cy - bodyH * 1.3);
+  ctx.stroke();
+
+  // Head
+  const hx = cx - bodyW * 0.45;
+  const hy = cy - bodyH * 1.3;
+  const headGrad = ctx.createRadialGradient(hx, hy, headR * 0.1, hx, hy, headR);
+  headGrad.addColorStop(0, lighten(color, 30));
+  headGrad.addColorStop(1, darkColor);
+  ctx.fillStyle = headGrad;
+  ctx.beginPath();
+  ctx.ellipse(hx, hy, headR * 1.4, headR, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Crown horns (3 pairs, crystalline)
+  ctx.fillStyle = '#7C4DFF';
+  for (let i = 0; i < 3; i++) {
+    const hoff = (i - 1) * headR * 0.4;
+    const hlen = (1.2 + i * 0.3) * headR;
+    ctx.beginPath();
+    ctx.moveTo(hx + hoff - headR * 0.1, hy - headR * 0.5);
+    ctx.lineTo(hx + hoff, hy - hlen);
+    ctx.lineTo(hx + hoff + headR * 0.1, hy - headR * 0.5);
+    ctx.fill();
+  }
+
+  // Snout
+  ctx.fillStyle = darken(color, 10);
+  ctx.beginPath();
+  ctx.ellipse(hx + headR * 0.5, hy + headR * 0.1, headR * 0.65, headR * 0.35, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glowing eye (bright purple)
+  ctx.fillStyle = '#B388FF';
+  ctx.shadowColor = '#B388FF';
+  ctx.shadowBlur = 10 * scale;
+  drawEye(ctx, hx - headR * 0.1, hy - headR * 0.2, 6 * scale, '#7C4DFF');
+  ctx.shadowBlur = 0;
+
+  // Energy breath for stage 3
+  if (stage === 3) {
+    ctx.fillStyle = 'rgba(120,80,255,0.6)';
+    ctx.beginPath();
+    ctx.ellipse(hx + headR * 1.3, hy + headR * 0.2, headR * 0.9, headR * 0.35, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200,150,255,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(hx + headR * 1.8, hy + headR * 0.25, headR * 0.6, headR * 0.2, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Spines on back (crystalline)
+  ctx.fillStyle = '#7C4DFF';
+  for (let i = 0; i < 5 + stage; i++) {
+    const sx = cx - bodyW * 0.3 + i * (bodyW * 0.5 / (4 + stage));
+    ctx.beginPath();
+    ctx.moveTo(sx, cy - bodyH * 0.4);
+    ctx.lineTo(sx + 3 * scale, cy - bodyH * 0.75 - i % 2 * 6 * scale);
+    ctx.lineTo(sx + 6 * scale, cy - bodyH * 0.4);
+    ctx.fill();
+  }
+}
+
 // ---- Accessories ----
 function drawCrown(ctx, cx, topY, scale, color) {
   const w = 22 * scale;
@@ -934,6 +1214,28 @@ function drawDarkAura(ctx, cx, cy, scale) {
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.arc(cx, cy, 55 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawDivineGlow(ctx, cx, cy, scale) {
+  const grad = ctx.createRadialGradient(cx, cy, 5 * scale, cx, cy, 50 * scale);
+  grad.addColorStop(0, 'rgba(255,215,0,0.15)');
+  grad.addColorStop(0.7, 'rgba(255,215,0,0.05)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 50 * scale, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawCosmicAura(ctx, cx, cy, scale) {
+  const grad = ctx.createRadialGradient(cx, cy, 8 * scale, cx, cy, 50 * scale);
+  grad.addColorStop(0, 'transparent');
+  grad.addColorStop(0.6, 'transparent');
+  grad.addColorStop(1, 'rgba(100,60,200,0.25)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 50 * scale, 0, Math.PI * 2);
   ctx.fill();
 }
 

@@ -31,10 +31,10 @@ window.Systems = (() => {
     const s1 = Game.getEffStats(mon1);
     const s2 = Game.getEffStats(mon2);
     const statBonus = {
-      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.05 * genMult + Math.random() * 10),
-      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.05 * genMult + Math.random() * 3),
-      def: Math.floor((s1.def + s2.def) / 2 * 0.05 * genMult + Math.random() * 3),
-      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.05 * genMult + Math.random() * 3),
+      hp:  Math.floor((s1.maxHp + s2.maxHp) / 2 * 0.15 * genMult + Math.random() * 30),
+      atk: Math.floor((s1.atk + s2.atk) / 2 * 0.15 * genMult + Math.random() * 9),
+      def: Math.floor((s1.def + s2.def) / 2 * 0.15 * genMult + Math.random() * 9),
+      spd: Math.floor((s1.spd + s2.spd) / 2 * 0.15 * genMult + Math.random() * 9),
     };
 
     // Child rarity: based on parents' average
@@ -278,16 +278,17 @@ window.Systems = (() => {
         case 'max_evolve':   earned = Game.getAllMonsters().some(m => m.stage >= 3); break;
         case 'first_breed':  earned = state.player.breeds >= 1; break;
         case 'breed_10':     earned = state.player.breeds >= 10; break;
-        case 'all_areas':    earned = state.unlockedAreas.length >= 5; break;
+        case 'all_areas':    earned = state.unlockedAreas.length >= 10; break;
         case 'all_monsters': {
           const types = new Set(Game.getAllMonsters().map(m => m.type));
-          earned = types.size >= 7;
+          earned = types.size >= 9;
           break;
         }
         case 'first_synthesis': earned = state.player.syntheses >= 1; break;
         case 'skill_master': earned = Game.getAllMonsters().some(m => getSkillCount(m) >= 12); break;
         case 'rich':         earned = state.player.gold >= 10000; break;
         case 'defeat_demon': earned = state.player.defeatDemon; break;
+        case 'defeat_dragon_god': earned = state.player.defeatDragonGod; break;
         case 'ng_plus':      earned = state.ngPlus; break;
         case 'generation_3': earned = Game.getAllMonsters().some(m => m.generation >= 3); break;
         case 'no_damage_win': earned = false; break; // checked in battle
