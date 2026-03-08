@@ -992,21 +992,25 @@ window.UI = (() => {
     html += `<div class="detail-level">Lv.${mon.level}  ${md.name}  世代${mon.generation}</div>`;
     html += `<div style="margin:4px 0 8px"><div class="battle-hp-bar" style="width:60%;margin:0 auto"><div class="hp-fill" style="width:${hpPct}%;background:${hpColor}"></div></div><div style="font-size:11px;color:#888;margin-top:2px">HP ${mon.hp} / ${stats.maxHp}</div></div>`;
 
-    const b = mon.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
-    const hasBonus = b.hp || b.atk || b.def || b.spd;
+    const bd = D.calcStatBreakdown(mon);
 
-    function statLine(label, total, bonus) {
-      if (hasBonus && bonus > 0) {
-        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">ベース${total - bonus} <span class="ds-breed-bonus">+${bonus}</span></div></div>`;
+    function statLine(label, total, key) {
+      const r = bd.rarity[key];
+      const br = bd.breed[key];
+      if (r > 0 || br > 0) {
+        let parts = `ベース${bd.base[key]}`;
+        if (r > 0) parts += ` <span class="ds-rarity-bonus">★+${r}</span>`;
+        if (br > 0) parts += ` <span class="ds-breed-bonus">繁殖+${br}</span>`;
+        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">${parts}</div></div>`;
       }
       return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div></div>`;
     }
 
     html += `<div class="detail-stats-grid">
-      ${statLine('HP', stats.maxHp, b.hp)}
-      ${statLine('ATK', stats.atk, b.atk)}
-      ${statLine('DEF', stats.def, b.def)}
-      ${statLine('SPD', stats.spd, b.spd)}
+      ${statLine('HP', stats.maxHp, 'hp')}
+      ${statLine('ATK', stats.atk, 'atk')}
+      ${statLine('DEF', stats.def, 'def')}
+      ${statLine('SPD', stats.spd, 'spd')}
     </div>`;
 
     // EXP
@@ -1200,17 +1204,21 @@ window.UI = (() => {
 
   function refreshDetailStats(mon) {
     const stats = Game.getEffStats(mon);
-    const b = mon.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
-    const hasBonus = b.hp || b.atk || b.def || b.spd;
-    function sl(label, total, bonus) {
-      if (hasBonus && bonus > 0) {
-        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">ベース${total - bonus} <span class="ds-breed-bonus">+${bonus}</span></div></div>`;
+    const bd = D.calcStatBreakdown(mon);
+    function sl(label, total, key) {
+      const r = bd.rarity[key];
+      const br = bd.breed[key];
+      if (r > 0 || br > 0) {
+        let parts = `ベース${bd.base[key]}`;
+        if (r > 0) parts += ` <span class="ds-rarity-bonus">★+${r}</span>`;
+        if (br > 0) parts += ` <span class="ds-breed-bonus">繁殖+${br}</span>`;
+        return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div><div class="ds-bonus">${parts}</div></div>`;
       }
       return `<div class="detail-stat"><div class="ds-label">${label}</div><div class="ds-val">${total}</div></div>`;
     }
     const grid = document.querySelector('.detail-stats-grid');
     if (grid) {
-      grid.innerHTML = `${sl('HP', stats.maxHp, b.hp)}${sl('ATK', stats.atk, b.atk)}${sl('DEF', stats.def, b.def)}${sl('SPD', stats.spd, b.spd)}`;
+      grid.innerHTML = `${sl('HP', stats.maxHp, 'hp')}${sl('ATK', stats.atk, 'atk')}${sl('DEF', stats.def, 'def')}${sl('SPD', stats.spd, 'spd')}`;
     }
   }
 

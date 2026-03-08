@@ -435,6 +435,33 @@ function getRarityInfo(star) {
   return RARITY_TABLE[(star || 1) - 1];
 }
 
+// Stat breakdown for display (base / rarity bonus / breed bonus)
+function calcStatBreakdown(monster) {
+  const md = MONSTER_TYPES[monster.type];
+  const stageMultipliers = [1.0, 1.5, 2.2, 3.0];
+  const sm = stageMultipliers[monster.stage] || 1.0;
+  const lv = monster.level;
+  const rarityMult = getRarityInfo(monster.rarity || 1).statMult;
+
+  const pureHp  = Math.floor(md.baseStats.hp  * sm * (1 + lv * 0.08));
+  const pureAtk = Math.floor(md.baseStats.atk * sm * (1 + lv * 0.08));
+  const pureDef = Math.floor(md.baseStats.def * sm * (1 + lv * 0.08));
+  const pureSpd = Math.floor(md.baseStats.spd * sm * (1 + lv * 0.08));
+
+  const withRarityHp  = Math.floor(md.baseStats.hp  * sm * (1 + lv * 0.08) * rarityMult);
+  const withRarityAtk = Math.floor(md.baseStats.atk * sm * (1 + lv * 0.08) * rarityMult);
+  const withRarityDef = Math.floor(md.baseStats.def * sm * (1 + lv * 0.08) * rarityMult);
+  const withRaritySpd = Math.floor(md.baseStats.spd * sm * (1 + lv * 0.08) * rarityMult);
+
+  const b = monster.statBonus || { hp: 0, atk: 0, def: 0, spd: 0 };
+
+  return {
+    base:   { hp: pureHp,                    atk: pureAtk,                    def: pureDef,                    spd: pureSpd },
+    rarity: { hp: withRarityHp - pureHp,     atk: withRarityAtk - pureAtk,    def: withRarityDef - pureDef,    spd: withRaritySpd - pureSpd },
+    breed:  { hp: b.hp,                      atk: b.atk,                      def: b.def,                      spd: b.spd },
+  };
+}
+
 // Exp needed to reach next level
 function expToLevel(level) {
   return Math.floor(19.25 * Math.pow(1.3, level - 1));
@@ -575,6 +602,7 @@ return {
   RARITY_TABLE,
   expToLevel,
   calcEffectiveStats,
+  calcStatBreakdown,
   rollRarity,
   getRarityInfo,
 };
