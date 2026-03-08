@@ -588,17 +588,13 @@ window.BattleEngine = (() => {
     Game.addGold(rewards.totalGold);
     Game.updateDailyQuest('gold', rewards.totalGold);
 
-    // Distribute exp: only the active fighter gets full exp
-    const activeMon = battleState.playerParty[battleState.currentPlayerIndex];
-
+    // All party members receive full exp
     for (const mon of battleState.playerParty) {
       const original = Game.getState().party.find(m => m.id === mon.id);
       if (original) {
         if (mon.battleHp > 0) original.hp = mon.battleHp;
-        if (mon.id === activeMon?.id) {
-          const leveled = Game.addExp(original, rewards.totalExp);
-          if (leveled) levelUps.push(original.nickname);
-        }
+        const leveled = Game.addExp(original, rewards.totalExp);
+        if (leveled) levelUps.push(original.nickname);
       }
     }
 
