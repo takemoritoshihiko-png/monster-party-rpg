@@ -393,6 +393,22 @@ window.UI = (() => {
     document.getElementById('bt-area-name').textContent = area.name;
     document.getElementById('bt-turn').textContent = 'Turn ' + (bs.turn + 1);
 
+    // Screen effects (flash + shake for special attacks)
+    if (bs._screenEffect === 'special') {
+      delete bs._screenEffect;
+      // Flash
+      const flash = document.createElement('div');
+      flash.className = 'battle-flash';
+      document.body.appendChild(flash);
+      flash.addEventListener('animationend', () => flash.remove());
+      // Shake
+      const battleScreen = document.getElementById('screen-battle');
+      battleScreen.classList.remove('battle-shake');
+      void battleScreen.offsetWidth;
+      battleScreen.classList.add('battle-shake');
+      battleScreen.addEventListener('animationend', () => battleScreen.classList.remove('battle-shake'), { once: true });
+    }
+
     renderBattleParty('bt-player-party', bs.playerParty, true, bs.currentPlayerIndex);
     renderBattleParty('bt-enemy-party', bs.enemyParty, false, -1);
     renderBattleLog();
@@ -450,6 +466,29 @@ window.UI = (() => {
 
       card.appendChild(canvas);
       card.appendChild(info);
+
+      // Battle effects
+      if (mon._effect === 'attack') {
+        card.classList.add(isPlayer ? 'fx-attack' : 'fx-attack-enemy');
+      } else if (mon._effect === 'special') {
+        card.classList.add(isPlayer ? 'fx-special' : 'fx-special-enemy');
+      } else if (mon._effect === 'damage') {
+        card.classList.add('fx-damage');
+      } else if (mon._effect === 'heal') {
+        card.classList.add('fx-heal');
+      }
+      if (mon._effect) delete mon._effect;
+
+      // Floating damage number
+      if (mon._dmgNumber) {
+        const dmg = mon._dmgNumber;
+        const floater = document.createElement('div');
+        floater.className = 'dmg-float' + (dmg.isSpecial ? ' special' : ' normal') + (dmg.isCrit ? ' crit' : '');
+        floater.textContent = dmg.value;
+        card.appendChild(floater);
+        floater.addEventListener('animationend', () => floater.remove());
+        delete mon._dmgNumber;
+      }
 
       // Enemy target click
       if (!isPlayer && !defeated && pendingAction) {

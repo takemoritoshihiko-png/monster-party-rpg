@@ -215,6 +215,9 @@ window.BattleEngine = (() => {
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${player.nickname}の攻撃！${enemy.nickname}に${damage}ダメージ！${critText}`);
     SFX.attack();
+    player._effect = 'attack';
+    enemy._effect = 'damage';
+    enemy._dmgNumber = { value: damage, isSpecial: false, isCrit };
     const defeated = applyDamage(enemy, damage, battleState.enemyParty);
 
     // Curse trait
@@ -270,6 +273,10 @@ window.BattleEngine = (() => {
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${player.nickname}の必殺技！${target.nickname}に${damage}ダメージ！${critText}`);
     SFX.attack();
+    player._effect = 'special';
+    target._effect = 'damage';
+    target._dmgNumber = { value: damage, isSpecial: true, isCrit };
+    battleState._screenEffect = 'special';
     applyDamage(target, damage, battleState.enemyParty);
 
     player.specialCooldown = 5;
@@ -291,6 +298,7 @@ window.BattleEngine = (() => {
       const heal = Math.min(itemData.effect.heal, Game.getEffStats(player).maxHp - player.battleHp);
       player.battleHp = Math.min(Game.getEffStats(player).maxHp, player.battleHp + itemData.effect.heal);
       addLog(`${player.nickname}は${itemData.name}を使った！HPが${heal}回復した！`);
+      player._effect = 'heal';
       SFX.heal();
       Game.getState().player.itemsUsed++;
       Game.updateDailyQuest('item_use');
@@ -443,21 +451,26 @@ window.BattleEngine = (() => {
     const activePlayer = battleState.playerParty[battleState.currentPlayerIndex];
     if (activePlayer && activePlayer.battleHp > 0) {
       const s = Game.getEffStats(activePlayer);
+      let healed = false;
       if (s.allTraits.includes('regeneration') && battleState.turn % 2 === 1) {
         const heal = Math.max(1, Math.floor(s.maxHp * 0.05));
         activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
         addLog(`${activePlayer.nickname}の再生！HPが${heal}回復！`);
+        healed = true;
       }
       if (s.allTraits.includes('divine_regen')) {
         const heal = Math.max(1, Math.floor(s.maxHp * 0.05));
         activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
         addLog(`${activePlayer.nickname}の神の再生！HPが${heal}回復！`);
+        healed = true;
       }
       if (s.setRegen > 0) {
         const heal = Math.max(1, Math.floor(s.maxHp * s.setRegen));
         activePlayer.battleHp = Math.min(s.maxHp, activePlayer.battleHp + heal);
         addLog(`${activePlayer.nickname}のセット効果でHPが${heal}回復！`);
+        healed = true;
       }
+      if (healed) activePlayer._effect = 'heal';
     }
 
     // Check if all players defeated
@@ -527,6 +540,10 @@ window.BattleEngine = (() => {
       let d = Math.floor(specDmg.damage * ngMult);
       addLog(`${enemy.nickname}の必殺技！${target.nickname}に${d}ダメージ！`);
       SFX.damage();
+      enemy._effect = 'special';
+      target._effect = 'damage';
+      target._dmgNumber = { value: d, isSpecial: true, isCrit: false };
+      battleState._screenEffect = 'special';
       applyDamage(target, d, battleState.playerParty);
       if (d > 0) battleState.noDamageTaken = false;
 
@@ -549,6 +566,9 @@ window.BattleEngine = (() => {
     const critText = isCrit ? 'クリティカル！' : '';
     addLog(`${enemy.nickname}の攻撃！${target.nickname}に${damage}ダメージ！${critText}`);
     SFX.damage();
+    enemy._effect = 'attack';
+    target._effect = 'damage';
+    target._dmgNumber = { value: damage, isSpecial: false, isCrit };
     const defeated = applyDamage(target, damage, battleState.playerParty);
     if (damage > 0) battleState.noDamageTaken = false;
 
